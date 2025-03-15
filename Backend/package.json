@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "mocha": "^11.1.0",
+    "nodemon": "^3.1.9"
+  }
+}

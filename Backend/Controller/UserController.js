@@ -96,7 +96,7 @@ async function login(req, res) {
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }// Clé secrète utilisée pour signer le JWT
+            { expiresIn: '1m' }// Clé secrète utilisée pour signer le JWT
             
         );
 

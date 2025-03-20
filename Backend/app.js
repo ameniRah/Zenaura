@@ -5,7 +5,7 @@ const path = require("path");
 
 // Importation des routes
 const postRouter = require("./Routes/Post");
-//const commentaireRouter = require("./Routes/Commentaire");
+const commentaireRouter = require("./Routes/Commentaire");
 //const messageRouter = require("./Routes/Message");
 
 // Importation des contrôleurs
@@ -37,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 // Configuration des routes
 app.use("/post", postRouter);
 //app.use("/message", messageRouter);
-//app.use("/commentaire", commentaireRouter);
+app.use("/commentaire", commentaireRouter);
 
 // Création et démarrage du serveur
 const server = http.createServer(app);

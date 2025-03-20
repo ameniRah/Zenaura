@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
-  
+const Commentaire = require('../models/Commentaire');
+  //*********************CRUD POST******************* */
     async function  addPost(req, res) {
       try {
         console.log(req.body);
@@ -61,7 +62,68 @@ const Post = require('../models/Post');
             }
           }
 
+ //*********************CRUD COMMENTAIRE******************* */
 
+ async function  addCommentaire(req, res) {
+  try {
+    console.log(req.body);
+    const comment = new Commentaire({
+        idAuteur: req.body.idAuteur,
+        idPost: req.body.idPost,
+        contenu : req.body.contenu,
+        date_creation : new Date().toISOString(),
+        
+  });
+    await comment.save();
+    res.status(201).json({message: "Commentaire ajouté avec succès",comment});
+   
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function getallCommentaire(req, res) {
+    try {
+      const comment = await Commentaire.find();
+  
+      res.status(200).json(comment);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function getCommentaireById(req, res) {
+      try {
+        const comment = await Commentaire.findById(req.params.id);
+    
+        res.status(200).json(comment);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+
+     async function deleteComment(req, res) {
+        try {
+          const comment = await Commentaire.findByIdAndDelete(req.params.id);
+      
+          res.status(200).json(comment);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+
+      async function updateComment(req, res) {
+        try {
+          const comment = await Commentaire.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+          });
+      
+          res.status(200).json(comment);
+        } catch (err) {
+          console.log(err);
+        }
+      }
 
 
 
@@ -70,5 +132,11 @@ const Post = require('../models/Post');
         getallPost,
         getPostById,
         deletePost,
-        updatePost 
+        updatePost,
+        addCommentaire,
+        getallCommentaire,
+        getCommentaireById,
+        deleteComment,
+        updateComment
+        
     }

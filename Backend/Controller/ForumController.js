@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
 const Commentaire = require('../models/Commentaire');
+const Message = require('../models/Message');
   //*********************CRUD POST******************* */
     async function  addPost(req, res) {
       try {
@@ -125,6 +126,8 @@ async function getallCommentaire(req, res) {
         }
       }
 
+     
+
 
 
     module.exports={
@@ -138,5 +141,7 @@ async function getallCommentaire(req, res) {
         getCommentaireById,
         deleteComment,
         updateComment
+        //getAllMessages
+      
         
     }

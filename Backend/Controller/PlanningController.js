@@ -212,7 +212,140 @@ async function getRendezVousByStatut(req, res) {
     }
 }
 
+//********************* Gestion des evenements ******************* */
 
+// ✅ Ajouter un événement
+async function addEvenement(req, res) {
+  try {
+      console.log(req.body);
+
+      const nouvelEvenement = new Evenement({
+          titre: req.body.titre,
+          description: req.body.description,
+          date: req.body.date,
+          heure_debut: req.body.heure_debut,
+          duree: req.body.duree,
+          capacite: req.body.capacite
+      });
+
+      await nouvelEvenement.save();
+      res.status(201).json({ message: "Événement ajouté avec succès", evenement: nouvelEvenement });
+
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de l'ajout de l'événement" });
+  }
+}
+
+// ✅ Récupérer tous les événements
+async function getAllEvenements(req, res) {
+  try {
+      const evenements = await Evenement.find();
+      res.status(200).json(evenements);
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de la récupération des événements" });
+  }
+}
+
+// ✅ Récupérer un événement par ID
+async function getEvenementById(req, res) {
+  try {
+      const evenement = await Evenement.findById(req.params.id);
+      res.status(200).json(evenement);
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de la récupération de l'événement" });
+  }
+}
+
+// ✅ Modifier un événement
+async function updateEvenement(req, res) {
+  try {
+      const evenement = await Evenement.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      res.status(200).json({ message: "Événement mis à jour", evenement });
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de la mise à jour de l'événement" });
+  }
+}
+
+// ✅ Supprimer un événement (et toutes les inscriptions associées)
+async function deleteEvenement(req, res) {
+  try {
+      await Evenement.findByIdAndDelete(req.params.id);
+      await InscriptionEvenement.deleteMany({ id_evenement: req.params.id });
+
+      res.status(200).json({ message: "Événement supprimé avec succès" });
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de la suppression de l'événement" });
+  }
+}
+
+// ✅ Inscrire un patient à un événement
+async function inscrireEvenement(req, res) {
+  try {
+
+      const { id_evenement, id_patient } = req.body;
+
+      ///console.log("ID de l'événement reçu:", id_evenement);
+
+      // Vérifier si l'événement existe
+      const evenement = await Evenement.findById(id_evenement);
+      if (!evenement) {
+          return res.status(404).json({ message: "Événement introuvable" });
+      }
+
+      // Vérifier s'il reste des places disponibles
+      const totalInscriptions = await InscriptionEvenement.countDocuments({ id_evenement });
+      if (totalInscriptions >= evenement.capacite) {
+          return res.status(400).json({ message: "Capacité maximale atteinte" });
+      }
+
+      // Vérifier si le patient est déjà inscrit
+      const dejaInscrit = await InscriptionEvenement.findOne({ id_evenement, id_patient });
+      if (dejaInscrit) {
+          return res.status(400).json({ message: "Le patient est déjà inscrit à cet événement" });
+      }
+
+      // Ajouter l'inscription
+      const nouvelleInscription = new InscriptionEvenement({ id_evenement, id_patient });
+      await nouvelleInscription.save();
+
+      res.status(201).json({ message: "Inscription réussie", inscription: nouvelleInscription });
+
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de l'inscription à l'événement" });
+  }
+}
+
+// ✅ Récupérer les inscriptions d'un événement
+async function getInscriptionsByEvenement(req, res) {
+  try {
+      const inscriptions = await InscriptionEvenement.find({ id_evenement: req.params.id_evenement });
+      res.status(200).json(inscriptions);
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de la récupération des inscriptions" });
+  }
+}
+
+// ✅ Annuler une inscription à un événement
+async function annulerInscription(req, res) {
+  try {
+      await InscriptionEvenement.findOneAndDelete({
+          id_evenement: req.params.id_evenement,
+          id_patient: req.params.id_patient
+      });
+
+      res.status(200).json({ message: "Inscription annulée avec succès" });
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de l'annulation de l'inscription" });
+  }
+}
 
 
   module.exports = {

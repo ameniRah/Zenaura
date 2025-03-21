@@ -11,9 +11,4 @@ router.delete("/disponibilites/:id",dispoController.deleteDisponibilite);
 router.put("/disponibilites/:id",dispoController.updateDisponibilite);
 
 
-
-
-
-
-
 module.exports = router;

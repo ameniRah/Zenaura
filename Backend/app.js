@@ -5,6 +5,10 @@ const path = require("path");
 
 // Importation des routes
 const dispoRouter = require("./Routes/Dispo");
+const rendezvousRouter = require("./Routes/RendezVous");
+const eventsRouter = require("./Routes/Evenement");
+
+
 
 // Importation des contrôleurs
 const planningController = require("./Controller/PlanningController");
@@ -32,6 +36,10 @@ app.use(express.json());  // Middleware pour analyser les requêtes JSON
 
 // Configuration des routes
 app.use("/apis", dispoRouter);
+app.use("/apis", rendezvousRouter);
+app.use("/apis", eventsRouter);
+
+
 
 // Création et démarrage du serveur
 const server = http.createServer(app);

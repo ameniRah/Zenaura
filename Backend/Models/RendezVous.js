@@ -8,7 +8,7 @@ const RendezVous=new Schema({
     date:Date,
     heure:String,
     motif:String,
-    statut:String
+    statut: { type: String, enum: ["en attente", "confirmé", "annulé"], default: "en attente" }
 })
 
 module.exports=mongo.model('rendezvous',RendezVous)

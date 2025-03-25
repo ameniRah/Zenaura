@@ -22,14 +22,15 @@ async function sendOTP(req, res) {
 
         // Configuration du service d'envoi d'email (Hotmail/Outlook)
         const transporter = nodemailer.createTransport({
-            host: 'smtp.office365.com',  // Serveur SMTP pour Hotmail/Outlook
-            port: 587,                  // Port TLS
-            secure: false,              // false signifie que TLS sera utilisé
-            auth: {
-                user: "ines.aouadi@esprit.tn",  // Ton adresse email Hotmail
-                pass: "sknclhrvjwvpzslc"         // Ton mot de passe
-            }
-        });
+         host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: false,  // false means TLS will be used
+        auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+        }
+});
+
 
         // Envoi de l'email avec l'OTP
         await transporter.sendMail({

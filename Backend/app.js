@@ -3,7 +3,8 @@ const mongo = require('mongoose');
 const db = require('./Config/db.json');
 const path = require('path');
 const UserRouter = require('./Routes/User');
-require('dotenv').config();
+require('dotenv').config({ path: './.env' });
+///console.log("Clé JWT secrète: ", process.env.JWT_SECRET); 
 
 mongo.connect(db.url)
     .then(() => {

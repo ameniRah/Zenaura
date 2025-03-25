@@ -8,7 +8,15 @@ const User = new Schema({
     password: String,
     role: String,
     dateInscription: Date,
-    isAnonymous:Boolean
+    isAnonymous: Boolean,
+    dateNaissance: Date,
+    otpCode: String,  // Code OTP
+    otpExpires: Date, // Expiration du code
+    status: {
+        type: String,
+        enum: ['autorisé', 'non autorisé'],  // Valeurs autorisées
+        default: 'autorisé'  // Par défaut, l'utilisateur est autorisé
+    }
     
 })
 

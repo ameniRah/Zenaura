@@ -1,178 +1,233 @@
 const User = require("../Models/User");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require("nodemailer"); // Pour envoyer des emails
+const crypto = require("crypto"); // Pour générer un OTP sécurisé
+const otpMap = new Map(); // Une structure temporaire pour stocker les OTPs associés aux emails
 
-async function add(req, res) {
+
+// 📨 1️⃣ Fonction pour envoyer un OTP à l'email de l'utilisateur
+async function sendOTP(req, res) {
     try {
-        const user = new User({
-            nom: req.body.nom,
-            prenom: req.body.prenom,
-            email:req.body.email,
-            password: req.body.password,
-            role: req.body.role,
-            dateInscription: req.body.dateInscription,
-            isAnonymous:req.body.isAnonymous
-          
+        const { email } = req.body; // Récupère l'email entré par l'utilisateur
+        const user = await User.findOne({ email }); // Cherche l'utilisateur dans la base de données
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+
+        // Générer un OTP (code à 6 chiffres aléatoire)
+        const otp = crypto.randomInt(100000, 999999).toString();
+        otpMap.set(email, otp); // Associe l'OTP à l'email de l'utilisateur (stocké temporairement)
+
+        // Configuration du service d'envoi d'email (Hotmail/Outlook)
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.office365.com',  // Serveur SMTP pour Hotmail/Outlook
+            port: 587,                  // Port TLS
+            secure: false,              // false signifie que TLS sera utilisé
+            auth: {
+                user: "ines.aouadi@esprit.tn",  // Ton adresse email Hotmail
+                pass: "sknclhrvjwvpzslc"         // Ton mot de passe
+            }
         });
 
-        await user.save();
-        res.status(200).send(user);
+        // Envoi de l'email avec l'OTP
+        await transporter.sendMail({
+            from: "ines.aouadi@esprit.tn",  // Ton adresse email Hotmail
+            to: email,                    // L'email de l'utilisateur
+            subject: "Code de récupération de mot de passe",
+            text: `Votre code de récupération est : ${otp}`
+        });
+
+        res.status(200).json({ message: "OTP envoyé à votre email." });
+
     } catch (err) {
-        console.log(err);
-        res.status(500).send
+        console.error(err);
+        res.status(500).json({ message: "Erreur serveur" });
     }
 }
-const secretKey = process.env.JWT_SECRET; //la clé secrète est stockée dans une variable d'environnement appelée JWT_SECRET
+// 🔑 2️⃣ Fonction pour vérifier l'OTP et mettre à jour le mot de passe
+async function verifyOTP(req, res) {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        // Vérifier si l'OTP entré correspond à celui stocké
+        if (otpMap.get(email) !== otp) {
+            return res.status(400).json({ message: "OTP invalide ou expiré" });
+        }
+
+        // Hacher le nouveau mot de passe avant de l'enregistrer
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Mettre à jour le mot de passe de l'utilisateur dans la base de données
+        await User.findOneAndUpdate({ email }, { password: hashedPassword });
+
+        // Supprimer l'OTP après l'utilisation
+        otpMap.delete(email);
+
+        res.status(200).json({ message: "Mot de passe réinitialisé avec succès !" });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+}
+
+
+const secretKey = process.env.JWT_SECRET;
+
 // Fonction d'inscription
 async function register(req, res) {
     try {
-        const { nom, prenom, email, password, role } = req.body;
+        const { nom, prenom, email, password, role,dateNaissance} = req.body;
 
-        // Vérifier si l'utilisateur existe déjà avec cet email
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            // Si l'utilisateur existe déjà, renvoyer une erreur avant toute modification dans la base
             return res.status(400).json({ message: 'Email déjà utilisé' });
         }
 
-        // Si l'utilisateur n'existe pas, hacher le mot de passe
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Créer un nouvel utilisateur
         const newUser = new User({
             nom,
             prenom,
             email,
             password: hashedPassword,
-            email,
-            role
+            role,
+            dateNaissance
         });
 
-        // Sauvegarder le nouvel utilisateur dans la base de données
-        await newUser.save();  // Si cette ligne échoue, le bloc catch sera exécuté
-
-        // Générer un token JWT pour l'utilisateur
         const token = jwt.sign(
             { id: newUser._id, email: newUser.email },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }  // Le token expire après 1 heure
+            { expiresIn: '2h' }
         );
 
-        // Répondre avec le token JWT
+        await newUser.save();
+
         res.status(201).json({
             message: 'Inscription réussie',
             token
         });
+
     } catch (err) {
-        // Si une erreur survient, ici tu captures toutes les erreurs possibles
         console.error('Erreur serveur:', err);
-
-       
-
-        // Autres erreurs
         res.status(500).json({ message: 'Erreur serveur' });
     }
 }
+
 async function login(req, res) {
     try {
-        // Récupérer les informations envoyées par l'utilisateur dans la requête
         const { email, password } = req.body;
 
-        // Vérifier si l'utilisateur existe dans la base de données
         const user = await User.findOne({ email });
-
         if (!user) {
             return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
         }
 
-        // Comparer le mot de passe entré avec celui stocké dans la base de données (haché)
-        const isMatch = await bcrypt.compare(password, user.password);
+        // Vérification du statut de l'utilisateur
+        if (user.status === "non autorisé") {
+            return res.status(403).json({
+                message: "Votre compte est non autorisé. Veuillez contacter l'administration pour plus d'informations."
+            });
+        }
 
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
         }
 
-        // Si l'email et le mot de passe sont corrects, générer un JWT
+        const expiresIn = '2h';
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET,
-            { expiresIn: '1m' }// Clé secrète utilisée pour signer le JWT
-            
-        );
+            { expiresIn }
+        );  
 
-        // Répondre avec le token JWT
+        console.log(`Token généré avec succès ! Durée de validité : ${expiresIn}`);
         res.status(200).json({
             message: 'Connexion réussie',
             token
         });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Erreur serveur' });
     }
 }
+async function authorizeUser(req, res) {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        user.status = "non autorisé";  // Changer le statut
+        await user.save();
+
+        res.status(200).json({ message: 'Utilisateur non autorisé avec succès' });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+}
+
 
 async function showusers(req, res) {
     try {
-        
-        const user = await User.find();
-        
-        res.status(200).send(user)
-        
+        const users = await User.find();
+        res.status(200).send(users);
     } catch (err) {
-        console.log(err)
-        
+        console.log(err);
+        res.status(500).json({ message: 'Erreur serveur' });
     }
 }
+
 async function showusersbyId(req, res) {
     try {
-        
-        const user= await User.findById(req.params.id);
-        
-        res.status(200).send(user)
-        
+        const user = await User.findById(req.params.id);
+        res.status(200).send(user);
     } catch (err) {
-        console.log(err)
-        
+        console.log(err);
+        res.status(500).json({ message: 'Erreur serveur' });
     }
-
 }
-async function showByName (req, res)  {
+
+async function showByName(req, res) {
     try {
-        const { name } = req.params.username
-        const user = await User.findOne(name);
-        
-        res.status(200).send(user)
-        
+        const { name } = req.params.username;
+        const user = await User.findOne({ name });
+        res.status(200).send(user);
     } catch (err) {
-        console.log(err)
-        
+        console.log(err);
+        res.status(500).json({ message: 'Erreur serveur' });
     }
-
 }
-async function deleteusers (req, res) {
+
+async function deleteusers(req, res) {
     try {
         const user = await User.findByIdAndDelete(req.params.id);
-        
-        res.status(200).send(user)
-        
+        res.status(200).send(user);
     } catch (err) {
-        console.log(err)
-        
+        console.log(err);
+        res.status(500).json({ message: 'Erreur serveur' });
     }
-
 }
+
 async function updateuser(req, res) {
     try {
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }); // new besh taatik l data baad update
-        
-        res.status(200).send(user)
-        
-    } catch (err) {
-        console.log(err)
-        
-    }
+        // Vérifier si le mot de passe est présent dans les nouvelles données
+        if (req.body.password) {
+            req.body.password = await bcrypt.hash(req.body.password, 10);
+        }
 
+        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+        res.status(200).send(user);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
 }
 
-module.exports = { add,showusers,showusersbyId,showByName,deleteusers,updateuser,register,login}
-
+module.exports = {  showusers, showusersbyId, showByName, deleteusers, updateuser, register, login,sendOTP,verifyOTP,authorizeUser };

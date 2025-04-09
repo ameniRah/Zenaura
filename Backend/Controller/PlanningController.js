@@ -1,7 +1,6 @@
 const Disponibilities = require("../Models/Disponibilities");
 const RendezVous = require("../Models/RendezVous");
 const Evenement = require("../Models/Evenemnts");
-const InscriptionEvenement = require("../Models/InscriEvenemenet");
 
 //********************* Gestion de  disponiblités ******************* */
 
@@ -225,7 +224,9 @@ async function addEvenement(req, res) {
           date: req.body.date,
           heure_debut: req.body.heure_debut,
           duree: req.body.duree,
-          capacite: req.body.capacite
+          capacite: req.body.capacite,
+          participants: [] // <- ajouté par sécurité
+
       });
 
       await nouvelEvenement.save();
@@ -273,79 +274,87 @@ async function updateEvenement(req, res) {
 // ✅ Supprimer un événement (et toutes les inscriptions associées)
 async function deleteEvenement(req, res) {
   try {
-      await Evenement.findByIdAndDelete(req.params.id);
-      await InscriptionEvenement.deleteMany({ id_evenement: req.params.id });
-
-      res.status(200).json({ message: "Événement supprimé avec succès" });
+    await Evenement.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Événement supprimé avec succès" });
   } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Erreur lors de la suppression de l'événement" });
+    console.log(err);
+    res.status(500).json({ message: "Erreur lors de la suppression de l'événement" });
   }
 }
+
 
 // ✅ Inscrire un patient à un événement
 async function inscrireEvenement(req, res) {
   try {
+    const { id_evenement, id_patient } = req.body;
 
-      const { id_evenement, id_patient } = req.body;
+    const evenement = await Evenement.findById(id_evenement);
+    if (!evenement) {
+      return res.status(404).json({ message: "Événement introuvable" });
+    }
 
-      ///console.log("ID de l'événement reçu:", id_evenement);
+    // Vérifier si déjà inscrit
+    const dejaInscrit = evenement.participants.some(p => p.id_patient === id_patient);
+    if (dejaInscrit) {
+      return res.status(400).json({ message: "Le patient est déjà inscrit" });
+    }
 
-      // Vérifier si l'événement existe
-      const evenement = await Evenement.findById(id_evenement);
-      if (!evenement) {
-          return res.status(404).json({ message: "Événement introuvable" });
-      }
+    // Vérifier la capacité
+    if (evenement.participants.length >= evenement.capacite) {
+      return res.status(400).json({ message: "Capacité maximale atteinte" });
+    }
 
-      // Vérifier s'il reste des places disponibles
-      const totalInscriptions = await InscriptionEvenement.countDocuments({ id_evenement });
-      if (totalInscriptions >= evenement.capacite) {
-          return res.status(400).json({ message: "Capacité maximale atteinte" });
-      }
+    // Ajouter l'inscription
+    evenement.participants.push({ id_patient });
+    await evenement.save();
 
-      // Vérifier si le patient est déjà inscrit
-      const dejaInscrit = await InscriptionEvenement.findOne({ id_evenement, id_patient });
-      if (dejaInscrit) {
-          return res.status(400).json({ message: "Le patient est déjà inscrit à cet événement" });
-      }
-
-      // Ajouter l'inscription
-      const nouvelleInscription = new InscriptionEvenement({ id_evenement, id_patient });
-      await nouvelleInscription.save();
-
-      res.status(201).json({ message: "Inscription réussie", inscription: nouvelleInscription });
+    res.status(201).json({ message: "Inscription réussie", evenement });
 
   } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Erreur lors de l'inscription à l'événement" });
+    console.log(err);
+    res.status(500).json({ message: "Erreur lors de l'inscription à l'événement" });
   }
 }
+
 
 // ✅ Récupérer les inscriptions d'un événement
 async function getInscriptionsByEvenement(req, res) {
   try {
-      const inscriptions = await InscriptionEvenement.find({ id_evenement: req.params.id_evenement });
-      res.status(200).json(inscriptions);
+    const evenement = await Evenement.findById(req.params.id_evenement);
+    if (!evenement) {
+      return res.status(404).json({ message: "Événement introuvable" });
+    }
+
+    res.status(200).json(evenement.participants);
   } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Erreur lors de la récupération des inscriptions" });
+    console.log(err);
+    res.status(500).json({ message: "Erreur lors de la récupération des participants" });
   }
 }
+
 
 // ✅ Annuler une inscription à un événement
 async function annulerInscription(req, res) {
   try {
-      await InscriptionEvenement.findOneAndDelete({
-          id_evenement: req.params.id_evenement,
-          id_patient: req.params.id_patient
-      });
+    const { id_evenement, id_patient } = req.params;
 
-      res.status(200).json({ message: "Inscription annulée avec succès" });
+    const evenement = await Evenement.findById(id_evenement);
+    if (!evenement) {
+      return res.status(404).json({ message: "Événement introuvable" });
+    }
+
+    // Filtrer les participants
+    const updatedParticipants = evenement.participants.filter(p => p.id_patient !== parseInt(id_patient));
+    evenement.participants = updatedParticipants;
+    await evenement.save();
+
+    res.status(200).json({ message: "Inscription annulée avec succès" });
   } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Erreur lors de l'annulation de l'inscription" });
+    console.log(err);
+    res.status(500).json({ message: "Erreur lors de l'annulation de l'inscription" });
   }
 }
+
 
 
   module.exports = {

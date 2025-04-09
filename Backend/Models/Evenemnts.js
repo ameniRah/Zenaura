@@ -1,16 +1,19 @@
-const mongo=require('mongoose')
-const Schema=mongo.Schema
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
+const Evenemnts = new Schema({
+  titre: String,
+  description: String,
+  date: Date,
+  heure_debut: String,
+  duree: Number,
+  capacite: Number,
+  participants: [
+    {
+      id_patient: Number,
+      inscrit_le: { type: Date, default: Date.now }
+    }
+  ]
+});
 
-const Evenemnts=new Schema({
-    titre:String,
-    description:String,
-    date:Date,
-    heure_debut:String,    
-    heure_debut:String,
-    duree:Number,
-    capacite:Number
-
-})
-
-module.exports=mongo.model('evenemnts',Evenemnts)
+module.exports = mongoose.model("Evenemnts", Evenemnts);

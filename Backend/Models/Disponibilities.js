@@ -1,9 +1,9 @@
 const mongo=require('mongoose')
-const Schema=mongo.Schema
+const Schema = mongo.Schema;
 
 
 const Disponibilities=new Schema({
-    id_psychologue:Number,
+    id_psychologue: { type: mongo.Schema.Types.ObjectId },
     date:Date,
     heure_debut:String,
     heure_fin:String,

@@ -3,8 +3,8 @@ const Schema=mongo.Schema
 
 
 const RendezVous=new Schema({
-    id_psychologue:Number,
-    id_patient:Number,
+    id_psychologue:{ type: mongo.Schema.Types.ObjectId },
+    id_patient:{ type: mongo.Schema.Types.ObjectId },
     date:Date,
     heure:String,
     motif:String,

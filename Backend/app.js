@@ -2,6 +2,8 @@
 const http = require("http");
 const express = require("express");
 const path = require("path");
+const { swaggerUi, swaggerSpec } = require('./swagger');
+
 
 // Importation des routes
 const dispoRouter = require("./Routes/Dispo");
@@ -33,6 +35,7 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "twig");
 app.use(express.json());  // Middleware pour analyser les requêtes JSON
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Configuration des routes
 app.use("/apis", dispoRouter);

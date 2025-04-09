@@ -30,7 +30,7 @@ const Message = require('../models/Message');
         }
       }
 
-      async function getPostById(req, res) {
+    async function getPostById(req, res) {
           try {
             const post = await Post.findById(req.params.id);
         
@@ -41,7 +41,7 @@ const Message = require('../models/Message');
         }
 
 
-         async function deletePost(req, res) {
+    async function deletePost(req, res) {
             try {
               const post = await Post.findByIdAndDelete(req.params.id);
           
@@ -51,7 +51,7 @@ const Message = require('../models/Message');
             }
           }
 
-          async function updatePost(req, res) {
+    async function updatePost(req, res) {
             try {
               const post = await Post.findByIdAndUpdate(req.params.id, req.body, {
                 new: true,
@@ -65,7 +65,7 @@ const Message = require('../models/Message');
 
  //*********************CRUD COMMENTAIRE******************* */
 
- async function  addCommentaire(req, res) {
+    async function  addCommentaire(req, res) {
   try {
     console.log(req.body);
     const comment = new Commentaire({
@@ -81,9 +81,9 @@ const Message = require('../models/Message');
   } catch (err) {
     console.log(err);
   }
-}
+      }
 
-async function getallCommentaire(req, res) {
+    async function getallCommentaire(req, res) {
     try {
       const comment = await Commentaire.find();
   
@@ -91,9 +91,9 @@ async function getallCommentaire(req, res) {
     } catch (err) {
       console.log(err);
     }
-  }
+      }
 
-  async function getCommentaireById(req, res) {
+    async function getCommentaireById(req, res) {
       try {
         const comment = await Commentaire.findById(req.params.id);
     
@@ -101,10 +101,10 @@ async function getallCommentaire(req, res) {
       } catch (err) {
         console.log(err);
       }
-    }
+      }
 
 
-     async function deleteComment(req, res) {
+    async function deleteComment(req, res) {
         try {
           const comment = await Commentaire.findByIdAndDelete(req.params.id);
       
@@ -114,7 +114,7 @@ async function getallCommentaire(req, res) {
         }
       }
 
-      async function updateComment(req, res) {
+    async function updateComment(req, res) {
         try {
           const comment = await Commentaire.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -141,7 +141,7 @@ async function getallCommentaire(req, res) {
         getCommentaireById,
         deleteComment,
         updateComment
-        //getAllMessages
+        
       
         
     }

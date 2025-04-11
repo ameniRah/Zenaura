@@ -1,3 +1,6 @@
+
+
+
 const Message = require("../models/Message");
 const { v4: uuidv4 } = require("uuid");
 
@@ -47,7 +50,7 @@ module.exports = function(io) {
                 const destinataireSocketId = users.get(data.destinataireId);
                 if (destinataireSocketId) {
                     io.to(destinataireSocketId).emit("newMessage", message);
-                    console.log("Message envoyé à : " + data.destinataireId);
+                    console.log("Message envoyé à :", data.destinataireId);
                 } else {
                     socket.emit("messageStatus", {
                         status: "non-livré",
@@ -61,17 +64,21 @@ module.exports = function(io) {
 
         socket.on("disconnect", async () => {
             console.log("🔴 Un utilisateur s'est déconnecté :", socket.id);
+
             let disconnectedUserId;
             for (let [key, value] of users.entries()) {
                 if (value === socket.id) {
                     disconnectedUserId = key;
                     users.delete(key);
-                    console.log(`Utilisateur avec ID ${key} supprimé de la liste des connectés.`);
+                    console.log(`🗑️ Utilisateur ${key} supprimé de la liste des connectés.`);
                     break;
                 }
             }
 
-            if (!disconnectedUserId) return;
+            if (!disconnectedUserId) {
+                console.log("⚠️ Aucun utilisateur déconnecté trouvé");
+                return;
+            }
 
             for (const [key, convo] of activeConversations.entries()) {
                 if (!convo.membres.includes(disconnectedUserId)) continue;
@@ -80,17 +87,25 @@ module.exports = function(io) {
                 const isU1Online = users.has(u1);
                 const isU2Online = users.has(u2);
 
+                console.log(`🧪 Vérification : ${u1} est ${isU1Online ? 'en ligne' : 'hors ligne'}, ${u2} est ${isU2Online ? 'en ligne' : 'hors ligne'}`);
+
                 if (!isU1Online && !isU2Online) {
                     const message = convo.messages[0];
-                    await Message.create({
-                        expediteurId: message.expediteurId,
-                        destinataireId: message.destinataireId,
-                        contenu: JSON.stringify(convo.messages),
-                        conversationId: convo.conversationId,
-                        status: 'livré',
-                        dateEnvoi: new Date()
-                    });
-                    console.log(`💾 Conversation ${key} sauvegardée`);
+
+                    try {
+                        await Message.create({
+                            expediteurId: message.expediteurId,
+                            destinataireId: message.destinataireId,
+                            contenu: JSON.stringify(convo.messages),
+                            conversationId: convo.conversationId,
+                            status: 'livré',
+                            dateEnvoi: new Date()
+                        });
+                        console.log(`✅ Conversation ${key} sauvegardée dans la base de données`);
+                    } catch (err) {
+                        console.error("❌ Erreur lors de la sauvegarde de la conversation :", err);
+                    }
+
                     activeConversations.delete(key);
                 }
             }

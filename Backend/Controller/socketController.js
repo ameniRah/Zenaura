@@ -1,61 +1,57 @@
 const Message = require("../models/Message");
+const { v4: uuidv4 } = require("uuid");
 
 module.exports = function(io) {
-    const users = new Map(); // Stocker les utilisateurs connectés (socket.id <-> expediteurId)
+    const users = new Map(); // socket.id <-> expediteurId
+    const activeConversations = new Map(); // key: user1-user2 => { messages: [], conversationId, membres }
+
+    const getKey = (id1, id2) => [id1, id2].sort().join("_");
 
     io.on("connection", (socket) => {
         console.log("🟢 Un utilisateur s'est connecté :", socket.id);
 
-        // Récupérer l'ID de l'expéditeur à partir de la requête de connexion
         const expediteurId = socket.handshake.query.expediteurId;
         if (!expediteurId) {
             console.error("❌ Expéditeur ID manquant !");
             return;
         }
-        users.set(expediteurId, socket.id); // Associer l'expéditeurId à socket.id
+        users.set(expediteurId, socket.id);
         console.log("ID de l'expéditeur :", expediteurId);
 
-        // 📌 Envoi du message
         socket.on("sendMessage", async (data) => {
             try {
-                if (typeof data === "string") {
-                    data = JSON.parse(data); // Convertir la chaîne en objet JSON
-                }
-
-                console.log("Données après conversion :", data);
-
+                if (typeof data === "string") data = JSON.parse(data);
                 if (!data.destinataireId || !data.contenu) {
                     console.error("Erreur : destinataireId et contenu sont nécessaires !");
                     return;
                 }
 
-                // Création du nouveau message
-                const newMessage = new Message({
-                    expediteurId: expediteurId,
+                const key = getKey(expediteurId, data.destinataireId);
+                if (!activeConversations.has(key)) {
+                    activeConversations.set(key, {
+                        conversationId: uuidv4(),
+                        membres: [expediteurId, data.destinataireId],
+                        messages: []
+                    });
+                }
+
+                const message = {
+                    expediteurId,
                     destinataireId: data.destinataireId,
                     contenu: data.contenu,
-                    status: 'non-livré' // Par défaut, non livré
-                });
+                    dateEnvoi: new Date(),
+                    status: 'livré'
+                };
+                activeConversations.get(key).messages.push(message);
 
-                // Sauvegarde dans la base de données
-                await newMessage.save();
-                console.log("Message sauvegardé :", newMessage);
-
-                // Vérifier si le destinataire est connecté
                 const destinataireSocketId = users.get(data.destinataireId);
                 if (destinataireSocketId) {
-                    // Si l'utilisateur est connecté, envoyer le message en temps réel
-                    io.to(destinataireSocketId).emit("newMessage", newMessage);
+                    io.to(destinataireSocketId).emit("newMessage", message);
                     console.log("Message envoyé à : " + data.destinataireId);
-                     // Mettre à jour le statut du message comme livré
-                   newMessage.status = 'livré';
-                   await newMessage.save();
                 } else {
-                    console.log("Destinataire non connecté via WebSocket.");
-                    // Informer l'expéditeur que le destinataire n'est pas connecté
                     socket.emit("messageStatus", {
                         status: "non-livré",
-                        message: "Destinataire non connecté, message enregistré mais pas encore livré"
+                        message: "Destinataire non connecté, message enregistré"
                     });
                 }
             } catch (error) {
@@ -63,48 +59,87 @@ module.exports = function(io) {
             }
         });
 
-        // 📌 Déconnexion
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
             console.log("🔴 Un utilisateur s'est déconnecté :", socket.id);
-            // Supprimer l'utilisateur de la liste des connectés
-            // Recherche de l'expéditeurId correspondant au socket.id
+            let disconnectedUserId;
             for (let [key, value] of users.entries()) {
                 if (value === socket.id) {
-                    users.delete(key); // Supprimer l'utilisateur de la map
+                    disconnectedUserId = key;
+                    users.delete(key);
                     console.log(`Utilisateur avec ID ${key} supprimé de la liste des connectés.`);
                     break;
+                }
+            }
+
+            if (!disconnectedUserId) return;
+
+            for (const [key, convo] of activeConversations.entries()) {
+                if (!convo.membres.includes(disconnectedUserId)) continue;
+
+                const [u1, u2] = convo.membres;
+                const isU1Online = users.has(u1);
+                const isU2Online = users.has(u2);
+
+                if (!isU1Online && !isU2Online) {
+                    const message = convo.messages[0];
+                    await Message.create({
+                        expediteurId: message.expediteurId,
+                        destinataireId: message.destinataireId,
+                        contenu: JSON.stringify(convo.messages),
+                        conversationId: convo.conversationId,
+                        status: 'livré',
+                        dateEnvoi: new Date()
+                    });
+                    console.log(`💾 Conversation ${key} sauvegardée`);
+                    activeConversations.delete(key);
                 }
             }
         });
     });
 
-    // 📌 Récupérer tous les messages via l'API REST
-    async function getMessages(req, res) {
+    async function getConversationMessages(req, res) {
         try {
-            // Recherche des messages filtrés par expéditeur et destinataire
-            const { expediteurId, destinataireId } = req.query;
-
-            if (!expediteurId || !destinataireId) {
-                return res.status(400).send("Les IDs de l'expéditeur et du destinataire sont nécessaires !");
+            const { userId, otherUserId } = req.query;
+            if (!userId || !otherUserId) {
+                return res.status(400).send("Les IDs des deux utilisateurs sont nécessaires !");
             }
 
-            // Recherche des messages entre les deux utilisateurs
-            const messages = await Message.find({
-                $or: [
-                    { expediteurId, destinataireId },
-                    { expediteurId: destinataireId, destinataireId: expediteurId }
-                ]
-            });
-
-            console.log("Messages récupérés :", messages);
-
-            res.status(200).json(messages);
+            const conversationId = getKey(userId, otherUserId);
+            const messages = await Message.find({ conversationId }).sort({ dateEnvoi: 1 });
+            if (messages.length > 0) {
+                const fullConversation = JSON.parse(messages[0].contenu);
+                return res.status(200).json(fullConversation);
+            }
+            res.status(200).json([]);
         } catch (err) {
             console.error("Erreur lors de la récupération des messages :", err);
             res.status(500).send("Erreur serveur");
         }
     }
 
-    // Exposer la fonction pour récupérer les messages
-    return { getMessages };
+    async function getUserConversations(req, res) {
+        try {
+            const { userId } = req.params;
+            if (!userId) {
+                return res.status(400).send("L'ID de l'utilisateur est nécessaire !");
+            }
+
+            const conversations = await Message.find({
+                $or: [
+                    { expediteurId: userId },
+                    { destinataireId: userId }
+                ]
+            }).sort({ dateEnvoi: -1 });
+
+            res.status(200).json(conversations);
+        } catch (err) {
+            console.error("Erreur lors de la récupération des conversations :", err);
+            res.status(500).send("Erreur serveur");
+        }
+    }
+
+    return { 
+        getConversationMessages,
+        getUserConversations
+    };
 };

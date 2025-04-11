@@ -5,7 +5,7 @@ const messageSchema = new mongoose.Schema({
   destinataireId: { type: String, required: true, },
   contenu: {type: String,required: true,},
   dateEnvoi: { type: Date,default: Date.now, },
-  //conversationId: { type: String, required: true, index: true }, // Identifiant unique pour la conversation
+  conversationId: { type: String, required: true, index: true }, // Identifiant unique pour la conversation
   status: { type: String, enum: ['livré', 'non-livré'], default: 'non-livré' }
 });
 

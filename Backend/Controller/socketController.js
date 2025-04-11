@@ -88,24 +88,28 @@ module.exports = function(io) {
                 const isU2Online = users.has(u2);
 
                 console.log(`🧪 Vérification : ${u1} est ${isU1Online ? 'en ligne' : 'hors ligne'}, ${u2} est ${isU2Online ? 'en ligne' : 'hors ligne'}`);
-
                 if (!isU1Online && !isU2Online) {
-                    const message = convo.messages[0];
-
+                    const cleanedMessages = convo.messages.map(msg => ({
+                        expediteurId: msg.expediteurId,
+                        destinataireId: msg.destinataireId,
+                        contenu: msg.contenu,
+                        dateEnvoi: msg.dateEnvoi
+                    }));
+                
                     try {
                         await Message.create({
-                            expediteurId: message.expediteurId,
-                            destinataireId: message.destinataireId,
-                            contenu: JSON.stringify(convo.messages),
+                            expediteurId: cleanedMessages[0].expediteurId,
+                            destinataireId: cleanedMessages[0].destinataireId,
+                            contenu: JSON.stringify(cleanedMessages),
                             conversationId: convo.conversationId,
                             status: 'livré',
                             dateEnvoi: new Date()
                         });
-                        console.log(`✅ Conversation ${key} sauvegardée dans la base de données`);
+                        console.log(`✅ Conversation ${key} sauvegardée avec messages simplifiés`);
                     } catch (err) {
-                        console.error("❌ Erreur lors de la sauvegarde de la conversation :", err);
+                        console.error("❌ Erreur lors de la sauvegarde :", err);
                     }
-
+                
                     activeConversations.delete(key);
                 }
             }

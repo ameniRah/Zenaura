@@ -34,6 +34,7 @@ module.exports = function(io) {
                     expediteurId: expediteurId,
                     destinataireId: data.destinataireId,
                     contenu: data.contenu,
+                    status: 'non-livré' // Par défaut, non livré
                 });
 
                 // Sauvegarde dans la base de données
@@ -46,8 +47,16 @@ module.exports = function(io) {
                     // Si l'utilisateur est connecté, envoyer le message en temps réel
                     io.to(destinataireSocketId).emit("newMessage", newMessage);
                     console.log("Message envoyé à : " + data.destinataireId);
+                     // Mettre à jour le statut du message comme livré
+                   newMessage.status = 'livré';
+                   await newMessage.save();
                 } else {
                     console.log("Destinataire non connecté via WebSocket.");
+                    // Informer l'expéditeur que le destinataire n'est pas connecté
+                    socket.emit("messageStatus", {
+                        status: "non-livré",
+                        message: "Destinataire non connecté, message enregistré mais pas encore livré"
+                    });
                 }
             } catch (error) {
                 console.error("Erreur lors de l'envoi du message :", error);

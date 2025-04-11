@@ -2,9 +2,10 @@
 const express = require("express");
 const router = express.Router();
 const Message = require("../models/Message");
+const messageController = require("../Controller/socketController");
 
 module.exports = function(io) {
-  // 📌 READ: Récupérer les messages via API REST
+  // 📌 READ: Récupérer tous les messages
   router.get("/getMessages", async (req, res) => {
     try {
       const messages = await Message.find();
@@ -15,5 +16,8 @@ module.exports = function(io) {
     }
   });
 
+  
+
+  // ✅ Retourner le router ici
   return router;
-}; 
+};

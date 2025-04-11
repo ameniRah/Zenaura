@@ -5,15 +5,6 @@ const socketIo = require("socket.io");
 const mongoose = require("mongoose");
 const path = require("path");
 
-// Importation des routes
-const postRouter = require("./Routes/Post");
-const commentaireRouter = require("./Routes/Commentaire");
-const messageRouter = require("./Routes/Message"); // Importer le fichier de routes des messages
-
-// Importation des contrôleurs
-const forumController = require("./Controller/ForumController");
-const socketController = require("./Controller/socketController"); // Importer le contrôleur des sockets
-
 // Connexion MongoDB
 const db = require("./Config/db.json");
 
@@ -39,8 +30,18 @@ const io = socketIo(server, {
   }
 });
 
+// Importation des contrôleurs
+const forumController = require("./Controller/ForumController");
+const socketController = require("./Controller/socketController"); // Importer le contrôleur des sockets
+
 // Passer l'instance de `io` au contrôleur Socket.IO
 socketController(io);
+
+// Importation des routes (maintenant que `io` est défini)
+const postRouter = require("./Routes/Post");
+const commentaireRouter = require("./Routes/Commentaire");
+const messageRouter = require('./Routes/Message');
+const messageRoute = messageRouter(io); // <- déplacer ici
 
 // Configuration des moteurs de vue et des middlewares
 app.set("views", path.join(__dirname, "views"));
@@ -53,6 +54,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/post", postRouter);
 app.use("/message", messageRouter(io)); // Passer `io` dans les routes de messages
 app.use("/commentaire", commentaireRouter);
+
 
 // Démarrer le serveur
 server.listen(3000, () => {

@@ -327,6 +327,91 @@ const getSessionsByUser = async (req, res) => {
         console.log(err);
         res.status(500).json({ message: "Erreur lors de la récupération des sessions de l'utilisateur" });
     }
+}; // Cette accolade fermante manquait ici
+
+// Récupérer les cours par catégorie
+const getCoursByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        
+        // Vérification que categoryId est fourni
+        if (!categoryId) {
+            return res.status(400).json({ message: "L'ID de catégorie est requis" });
+        }
+        
+        // Récupérer les cours de la catégorie spécifiée
+        const cours = await Cours.find({ category_id: categoryId });
+        
+        res.status(200).json(cours);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des cours par catégorie:", error);
+        res.status(500).json({ message: "Erreur serveur lors de la récupération des cours par catégorie" });
+    }
+};
+
+// Filtrer les cours par prix
+const getCoursByPrice = async (req, res) => {
+    try {
+        const { min, max } = req.query;
+        let query = {};
+        
+        // Construire la requête en fonction des paramètres
+        if (min !== undefined) {
+            query.price = { ...query.price, $gte: Number(min) };
+        }
+        
+        if (max !== undefined) {
+            query.price = { ...query.price, $lte: Number(max) };
+        }
+        
+        // Récupérer les cours filtrés par prix
+        const cours = await Cours.find(query).sort({ price: 1 });
+        
+        res.status(200).json(cours);
+    } catch (error) {
+        console.error("Erreur lors du filtrage des cours par prix:", error);
+        res.status(500).json({ message: "Erreur serveur lors du filtrage des cours par prix" });
+    }
+};
+
+// Récupérer les cours par popularité
+const getCoursByPopularity = async (req, res) => {
+    try {
+        // Tri par date de création (du plus récent au plus ancien)
+        const cours = await Cours.find()
+            .sort({ created_at: -1 })
+            .limit(10);
+        
+        res.status(200).json(cours);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des cours par popularité:", error);
+        res.status(500).json({ message: "Erreur serveur lors de la récupération des cours par popularité" });
+    }
+};
+
+// Rechercher des cours
+const searchCours = async (req, res) => {
+    try {
+        const { q } = req.query;
+        
+        // Vérification que le terme de recherche est fourni
+        if (!q) {
+            return res.status(400).json({ message: "Le terme de recherche est requis" });
+        }
+        
+        // Recherche dans les titres et descriptions des cours
+        const cours = await Cours.find({
+            $or: [
+                { title: { $regex: q, $options: 'i' } },    // 'i' pour insensible à la casse
+                { description: { $regex: q, $options: 'i' } }
+            ]
+        });
+        
+        res.status(200).json(cours);
+    } catch (error) {
+        console.error("Erreur lors de la recherche des cours:", error);
+        res.status(500).json({ message: "Erreur serveur lors de la recherche des cours" });
+    }
 };
 
 module.exports = {
@@ -352,5 +437,13 @@ module.exports = {
     inscrireCoursSession,
     getInscriptionsBySession,
     annulerInscription,
-    getSessionsByUser
+    getSessionsByUser,
+    //cours by category
+    getCoursByCategory,
+    //cours by price    
+    getCoursByPrice,
+    //cours by popularity
+    getCoursByPopularity,
+    //search cours
+    searchCours
 };

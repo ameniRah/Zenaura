@@ -1,11 +1,15 @@
-const express = require('express'); 
+const express = require('express');
 const router = express.Router();
-const {
-    createCours,
-    getAllCours,
-    getCoursById,
-    updateCours,
-    deleteCours
+const { 
+    createCours, 
+    getAllCours, 
+    getCoursById, 
+    updateCours, 
+    deleteCours,
+    getCoursByCategory,
+    getCoursByPrice,
+    getCoursByPopularity,
+    searchCours 
 } = require('../Controller/CoursController');
 
 /**
@@ -134,5 +138,77 @@ router.put('/update/:id', updateCours);
  */
 router.delete('/delete/:id', deleteCours);
 
-module.exports = router;
+/**
+ * @swagger
+ * /api/cours/category/{categoryId}:
+ *   get:
+ *     summary: Récupérer les cours par catégorie
+ *     tags: [Cours]
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID de la catégorie
+ *     responses:
+ *       200:
+ *         description: Liste des cours par catégorie
+ */
+router.get('/category/:categoryId', getCoursByCategory);
 
+/**
+ * @swagger
+ * /api/cours/filter/price:
+ *   get:
+ *     summary: Récupérer les cours filtrés par prix
+ *     tags: [Cours]
+ *     parameters:
+ *       - in: query
+ *         name: min
+ *         schema:
+ *           type: number
+ *         description: Prix minimum
+ *       - in: query
+ *         name: max
+ *         schema:
+ *           type: number
+ *         description: Prix maximum
+ *     responses:
+ *       200:
+ *         description: Liste des cours filtrés par prix
+ */
+router.get('/filter/price', getCoursByPrice);
+
+/**
+ * @swagger
+ * /api/cours/filter/popularity:
+ *   get:
+ *     summary: Récupérer les cours par popularité
+ *     tags: [Cours]
+ *     responses:
+ *       200:
+ *         description: Liste des cours triés par popularité
+ */
+router.get('/filter/popularity', getCoursByPopularity);
+
+/**
+ * @swagger
+ * /api/cours/search:
+ *   get:
+ *     summary: Rechercher des cours
+ *     tags: [Cours]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Terme de recherche
+ *     responses:
+ *       200:
+ *         description: Résultats de recherche des cours
+ */
+router.get('/search', searchCours);
+
+module.exports = router;

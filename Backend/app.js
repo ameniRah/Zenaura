@@ -4,6 +4,7 @@ const express = require("express");
 const socketIo = require("socket.io");
 const mongoose = require("mongoose");
 const path = require("path");
+const { swaggerUi, swaggerSpec } = require('./swager');
 
 // Connexion MongoDB
 const db = require("./Config/db.json");
@@ -35,6 +36,7 @@ const socketController = require("./Controller/socketController"); // Gestion We
 
 // Initialiser la logique WebSocket avec io
 const messageApi = socketController(io); // Ce retour contient les fonctions REST
+//
 
 // Importation des routes
 const postRouter = require("./Routes/Post");
@@ -47,6 +49,7 @@ app.set("view engine", "twig");
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 📌 Configuration des routes REST
 app.use("/post", postRouter);

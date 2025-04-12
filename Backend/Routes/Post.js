@@ -2,16 +2,109 @@ const express = require("express");
 const router = express.Router();
 const postController = require("../Controller/ForumController");
 
-router.post("/addPost/", postController.addPost);
-router.get("/getallPost/", postController.getallPost);
+/**
+ * @swagger
+ * /post/addPost:
+ *   post:
+ *     summary: Ajouter un nouveau post
+ *     tags: [Posts]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               titre:
+ *                 type: string
+ *               contenu:
+ *                 type: string
+ *               userId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Post créé avec succès
+ */
+router.post("/addPost", postController.addPost);
+
+/**
+ * @swagger
+ * /post/getallPost:
+ *   get:
+ *     summary: Récupérer tous les posts
+ *     tags: [Posts]
+ *     responses:
+ *       200:
+ *         description: Liste des posts
+ */
+router.get("/getallPost", postController.getallPost);
+
+/**
+ * @swagger
+ * /post/getPostbyId/{id}:
+ *   get:
+ *     summary: Récupérer un post par ID
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du post
+ *     responses:
+ *       200:
+ *         description: Détails du post
+ */
 router.get("/getPostbyId/:id", postController.getPostById);
-router.delete("/deletePost/:id",postController.deletePost);
-router.put("/updatePost/:id",postController.updatePost);
 
+/**
+ * @swagger
+ * /post/deletePost/{id}:
+ *   delete:
+ *     summary: Supprimer un post par ID
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du post à supprimer
+ *     responses:
+ *       200:
+ *         description: Post supprimé avec succès
+ */
+router.delete("/deletePost/:id", postController.deletePost);
 
-
-
-
-
+/**
+ * @swagger
+ * /post/updatePost/{id}:
+ *   put:
+ *     summary: Mettre à jour un post
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID du post à mettre à jour
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               titre:
+ *                 type: string
+ *               contenu:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Post mis à jour avec succès
+ */
+router.put("/updatePost/:id", postController.updatePost);
 
 module.exports = router;

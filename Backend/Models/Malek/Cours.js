@@ -20,11 +20,11 @@ const CoursSchema = new Schema({
     },
     category_id: {
         type: Schema.Types.ObjectId,
-        ref: 'CoursCategory', // Référence à CourseCategory
+        ref: 'CoursCategory', 
         required: true
     },
 
-    instructor_id: { type: String, required: true }, // Utilise une chaîne pour l'instant
+    instructor_id: { type: String, required: true }, 
 
     /*instructor_id: {
         type: Schema.Types.ObjectId,

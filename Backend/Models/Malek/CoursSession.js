@@ -9,7 +9,7 @@ const CoursSessionSchema = new Schema({
         maxlength: 100
     },
     cours_id: {
-        type: String,  // Peut être un ObjectId plus tard selon la base de données
+        type: String,
         required: true
     },
     video_url: {
@@ -38,9 +38,20 @@ const CoursSessionSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'completed'],  // Exemple de statut
+        enum: ['active', 'inactive', 'completed'],
         required: true
     },
+    // Nouveau champ pour les participants
+    participants: [{
+        user_id: {
+            type: String,
+            required: true
+        },
+        inscription_date: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     created_at: {
         type: Date,
         default: Date.now

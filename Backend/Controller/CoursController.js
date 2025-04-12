@@ -1,13 +1,9 @@
 //CoursCategory
 const CoursCategory = require('../models/CoursCategory');
-
-
 //Cours
 const Cours = require('../Models/Cours');
-
 //coursseesion
 const CoursSession = require('../Models/CoursSession');
-
 //Validation
 const { validateCourseCategory, validateCours, validateCoursSession  } = require('../Middll/Validate');
 
@@ -50,7 +46,6 @@ const getCategoryById = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 const updateCategory = async (req, res) => {
     const { error } = validateCourseCategory(req.body);
@@ -171,6 +166,7 @@ const createCoursSession = async (req, res) => {
         location,
         capacity,
         status,
+        participants: [], // Initialiser un tableau vide pour les participants
         created_at: new Date(),
         updated_at: new Date(),
     });
@@ -242,6 +238,97 @@ const deleteCoursSession = async (req, res) => {
     }
 };
 
+// Inscrire un utilisateur à une session de cours
+const inscrireCoursSession = async (req, res) => {
+    try {
+        const { session_id, user_id } = req.body;
+
+        const session = await CoursSession.findById(session_id);
+        if (!session) {
+            return res.status(404).json({ message: "Session de cours introuvable" });
+        }
+
+        // Vérifier si déjà inscrit
+        const dejaInscrit = session.participants.some(p => p.user_id === user_id);
+        if (dejaInscrit) {
+            return res.status(400).json({ message: "L'utilisateur est déjà inscrit à cette session" });
+        }
+
+        // Vérifier la capacité
+        if (session.participants.length >= session.capacity) {
+            return res.status(400).json({ message: "Capacité maximale atteinte pour cette session" });
+        }
+
+        // Ajouter l'inscription
+        session.participants.push({ user_id });
+        await session.save();
+
+        res.status(201).json({ message: "Inscription réussie", session });
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Erreur lors de l'inscription à la session de cours" });
+    }
+};
+
+// Récupérer les inscriptions d'une session de cours
+const getInscriptionsBySession = async (req, res) => {
+    try {
+        const session = await CoursSession.findById(req.params.session_id);
+        if (!session) {
+            return res.status(404).json({ message: "Session de cours introuvable" });
+        }
+
+        res.status(200).json(session.participants);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Erreur lors de la récupération des participants" });
+    }
+};
+
+// Annuler une inscription à une session de cours
+const annulerInscription = async (req, res) => {
+    try {
+        const { session_id, user_id } = req.params;
+
+        const session = await CoursSession.findById(session_id);
+        if (!session) {
+            return res.status(404).json({ message: "Session de cours introuvable" });
+        }
+
+        // Filtrer les participants
+        const indexParticipant = session.participants.findIndex(p => p.user_id === user_id);
+        
+        if (indexParticipant === -1) {
+            return res.status(404).json({ message: "Inscription non trouvée" });
+        }
+        
+        session.participants.splice(indexParticipant, 1);
+        await session.save();
+
+        res.status(200).json({ message: "Inscription annulée avec succès" });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Erreur lors de l'annulation de l'inscription" });
+    }
+};
+
+// Récupérer toutes les sessions auxquelles un utilisateur est inscrit
+const getSessionsByUser = async (req, res) => {
+    try {
+        const user_id = req.params.user_id;
+        
+        const sessions = await CoursSession.find({
+            'participants.user_id': user_id
+        });
+        
+        res.status(200).json(sessions);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Erreur lors de la récupération des sessions de l'utilisateur" });
+    }
+};
+
 module.exports = {
     createCategory,
     getAllCategories,
@@ -257,5 +344,10 @@ module.exports = {
     getAllCoursSessions,
     getCoursSessionById,
     updateCoursSession,
-    deleteCoursSession
+    deleteCoursSession,
+    // Nouvelles fonctions d'inscription
+    inscrireCoursSession,
+    getInscriptionsBySession,
+    annulerInscription,
+    getSessionsByUser
 };

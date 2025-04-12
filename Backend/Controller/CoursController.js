@@ -1,5 +1,5 @@
 //CoursCategory
-const CoursCategory = require('../models/CoursCategory');
+const CoursCategory = require('../Models/CoursCategory');
 //Cours
 const Cours = require('../Models/Cours');
 //coursseesion
@@ -330,22 +330,25 @@ const getSessionsByUser = async (req, res) => {
 };
 
 module.exports = {
+    //category
     createCategory,
     getAllCategories,
     getCategoryById,
     updateCategory,
     deleteCategory,
+    //cours
     createCours,
     getAllCours,
     getCoursById,
     updateCours,
     deleteCours,
+    //coursSession
     createCoursSession,
     getAllCoursSessions,
     getCoursSessionById,
     updateCoursSession,
     deleteCoursSession,
-    // Nouvelles fonctions d'inscription
+    //inscription
     inscrireCoursSession,
     getInscriptionsBySession,
     annulerInscription,

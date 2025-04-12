@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const app = express();
 const cors = require('cors');
 const port = 3000;
+const { swaggerUi, swaggerSpec } = require('./swagger');
+
 
 // Importation du fichier de configuration de la base de données
 const dbConfig = require('./config/db.json');
@@ -17,8 +19,9 @@ app.use(express.json());
 app.use(cors());
 
 // Importer le modèle
-const CoursCategory = require('./models/CoursCategory');
-
+const CoursCategory = require('./Models/CoursCategory');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+ 
 // Importation des routes pour CoursCategory
 const coursCategoryRoutes = require('./Routes/CoursCategory');
 app.use('/api/coursecategories', coursCategoryRoutes);

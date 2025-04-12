@@ -6,8 +6,21 @@ const messageSchema = new mongoose.Schema({
   contenu: {type: String,required: true,},
   dateEnvoi: { type: Date,default: Date.now, },
   conversationId: { type: String, required: true, index: true }, // Identifiant unique pour la conversation
+   reactions: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',  // L'utilisateur qui a réagi
+            required: true
+        },
+        emoji: {
+            type: String,  // L'emoji en chaîne de caractères
+            required: true
+        }
+    }],
   status: { type: String, enum: ['livré', 'non-livré'], default: 'non-livré' }
 });
+
+
 
 
 // Index pour accélérer les recherches par conversationId

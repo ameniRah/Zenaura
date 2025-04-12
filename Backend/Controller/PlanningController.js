@@ -1,7 +1,7 @@
 const Disponibilities = require("../Models/Disponibilities");
 const RendezVous = require("../Models/RendezVous");
 const Evenement = require("../Models/Evenemnts");
-
+const Notification = require("../Models/Notification");
 //********************* Gestion de  disponiblités ******************* */
 
 // ✅ Ajouter une disponibilité
@@ -95,45 +95,84 @@ async function addDisponibilite(req, res) {
 
 //********************* Gestion de rendezvous ******************* */
 
-
-// ✅ Ajouter un rendez-vous (avec vérification des disponibilités)
+// ✅ Ajouter un rendez-vous (avec vérification des disponibilités + notification)
 async function addRendezVous(req, res) {
-    try {
-        console.log(req.body);
+  try {
+    console.log(req.body);
 
-        // Vérifier si le psychologue est disponible à la date et heure demandées
-        const disponibilite = await Disponibilities.findOne({
-            id_psychologue: req.body.id_psychologue,
-            date: req.body.date,
-            heure_debut: { $lte: req.body.heure }, // Heure de début ≤ heure demandée
-            heure_fin: { $gte: req.body.heure },   // Heure de fin ≥ heure demandée
-            statut: "disponible"
-        });
+    // 🔎 Vérifier la disponibilité du psychologue
+    const disponibilite = await Disponibilities.findOne({
+      id_psychologue: req.body.id_psychologue,
+      date: req.body.date,
+      heure_debut: { $lte: req.body.heure },
+      heure_fin: { $gte: req.body.heure },
+      statut: "disponible"
+    });
 
-        if (!disponibilite) {
-            return res.status(400).json({ message: "Le psychologue n'est pas disponible à ce créneau." });
-        }
-
-        // Créer le rendez-vous
-        const rendezVous = new RendezVous({
-            id_psychologue: req.body.id_psychologue,
-            id_patient: req.body.id_patient,
-            date: req.body.date,
-            heure: req.body.heure,
-            motif: req.body.motif,
-            statut: "en attente"
-        });
-
-        await rendezVous.save();
-        res.status(201).json({ message: "Rendez-vous ajouté avec succès", rendezVous });
-
-        // Mettre à jour la disponibilité comme "occupé"
-        await Disponibilities.findByIdAndUpdate(disponibilite._id, { statut: "occupé" });
-
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Erreur lors de l'ajout du rendez-vous" });
+    if (!disponibilite) {
+      return res.status(400).json({
+        message: "Le psychologue n'est pas disponible à ce créneau."
+      });
     }
+
+    // 📝 Créer le rendez-vous
+    const rendezVous = new RendezVous({
+      id_psychologue: req.body.id_psychologue,
+      id_patient: req.body.id_patient,
+      date: req.body.date,
+      heure: req.body.heure,
+      motif: req.body.motif,
+      statut: "en attente"
+    });
+
+    await rendezVous.save();
+
+    // ✅ Mettre à jour la disponibilité comme "occupé"
+    await Disponibilities.findByIdAndUpdate(disponibilite._id, { statut: "occupé" });
+
+    // 🔔 Créer la notification pour le patient
+    // Construire une date ISO correcte à partir de `rendezVous.date` et `rendezVous.heure`
+    const date = new Date(rendezVous.date);
+    const [hours, minutes] = rendezVous.heure.split(':');
+    date.setHours(parseInt(hours));
+    date.setMinutes(parseInt(minutes));
+    date.setSeconds(0);
+
+    // Format d'affichage (français, exemple : "jeudi 20 mars 2025 à 11:00")
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateStr = date.toLocaleDateString('fr-FR', options);
+    const heureStr = `${hours}:${minutes}`;
+
+
+    // Construire la date de rappel 1h avant
+    const dateRappelMoins1h = new Date(date.getTime() - 60 * 60 * 1000);
+    const message = `Votre rendez-vous avec le psychologue est prévu le ${dateStr} à ${heureStr}.`;
+
+    const notification = new Notification({
+      id_patient: rendezVous.id_patient,
+      type: "rendezvous",
+      id_cible: rendezVous._id,
+      message,
+      date_rappel: dateRappelMoins1h,
+      lu: false,
+      envoye: false
+
+    });
+
+    await notification.save();
+
+    // ✅ Réponse finale
+    res.status(201).json({
+      message: "Rendez-vous ajouté avec succès",
+      rendezVous
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Erreur lors de l'ajout du rendez-vous"
+    });
+  }
 }
 
 // ✅ Récupérer tous les rendez-vous
@@ -249,6 +288,18 @@ async function getAllEvenements(req, res) {
   }
 }
 
+
+// ✅ Récupérer tous les événements
+async function getAllEvenements(req, res) {
+  try {
+      const evenements = await Evenement.find();
+      res.status(200).json(evenements);
+  } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Erreur lors de la récupération des événements" });
+  }
+}
+
 // ✅ Récupérer un événement par ID
 async function getEvenementById(req, res) {
   try {
@@ -283,7 +334,7 @@ async function deleteEvenement(req, res) {
 }
 
 
-// ✅ Inscrire un patient à un événement
+// ✅ Inscrire un patient à un événement (avec notification)
 async function inscrireEvenement(req, res) {
   try {
     const { id_evenement, id_patient } = req.body;
@@ -293,28 +344,59 @@ async function inscrireEvenement(req, res) {
       return res.status(404).json({ message: "Événement introuvable" });
     }
 
-    // Vérifier si déjà inscrit
+    // 🔁 Vérifier si déjà inscrit
     const dejaInscrit = evenement.participants.some(p => p.id_patient === id_patient);
     if (dejaInscrit) {
       return res.status(400).json({ message: "Le patient est déjà inscrit" });
     }
 
-    // Vérifier la capacité
+    // 🧮 Vérifier la capacité
     if (evenement.participants.length >= evenement.capacite) {
       return res.status(400).json({ message: "Capacité maximale atteinte" });
     }
 
-    // Ajouter l'inscription
+    // ➕ Ajouter l'inscription
     evenement.participants.push({ id_patient });
     await evenement.save();
 
+    // 🔔 Créer la notification pour le patient
+    // Construire une date ISO correcte à partir de `evenement.date` et `evenement.heure_debut`
+    const date = new Date(evenement.date);
+    const [hours, minutes] = evenement.heure_debut.split(':');
+    date.setHours(parseInt(hours));
+    date.setMinutes(parseInt(minutes));
+    date.setSeconds(0);
+
+    // Format d'affichage (français, exemple : "jeudi 20 mars 2025 à 11:00")
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateStr = date.toLocaleDateString('fr-FR', options);
+    const heureStr = `${hours}:${minutes}`;
+
+
+    // Construire la date de rappel 1h avant
+    const dateRappelMoins1h = new Date(date.getTime() - 60 * 60 * 1000);
+    const message = `Vous êtes inscrit à l'événement "${evenement.titre}" prévu le ${dateStr} à ${heureStr}.`;
+    const notification = new Notification({
+      id_patient,
+      type: "evenement",
+      id_cible: evenement._id,
+      message,
+      date_rappel: dateRappelMoins1h,
+      lu: false,
+      envoye: false
+    });
+
+    await notification.save();
+
+    // ✅ Retour au client
     res.status(201).json({ message: "Inscription réussie", evenement });
 
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ message: "Erreur lors de l'inscription à l'événement" });
   }
 }
+
 
 
 // ✅ Récupérer les inscriptions d'un événement
@@ -355,6 +437,47 @@ async function annulerInscription(req, res) {
   }
 }
 
+//********************* Gestion des notification ******************* */
+
+
+// ✅ Récupérer toutes les notifications d’un patient
+async function getNotificationsByPatient(req, res) {
+  try {
+    const { id_patient } = req.params;
+
+    const notifications = await Notification.find({ id_patient })
+      .sort({ date_rappel: -1 }); // Les plus récentes en premier
+
+    res.status(200).json({ notifications });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur lors de la récupération des notifications" });
+  }
+}
+// ✅ Marquer comme lue
+async function markNotificationAsRead(req, res) {
+  try {
+    const { id } = req.params;
+
+    const notification = await Notification.findByIdAndUpdate(
+      id,
+      { lu: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification introuvable" });
+    }
+
+    res.status(200).json({ message: "Notification marquée comme lue", notification });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur lors de la mise à jour de la notification" });
+  }
+}
+
 
 
   module.exports = {
@@ -379,5 +502,7 @@ async function annulerInscription(req, res) {
     deleteEvenement,
     inscrireEvenement,
     getInscriptionsByEvenement,
-    annulerInscription
+    annulerInscription,
+    getNotificationsByPatient, 
+    markNotificationAsRead
   };

@@ -9,6 +9,7 @@ const { swaggerUi, swaggerSpec } = require('./swagger');
 const dispoRouter = require("./Routes/Dispo");
 const rendezvousRouter = require("./Routes/RendezVous");
 const eventsRouter = require("./Routes/Evenement");
+const notificationRouter = require("./Routes/Notification");
 
 
 
@@ -40,7 +41,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Configuration des routes
 app.use("/apis", dispoRouter);
 app.use("/apis", rendezvousRouter);
-app.use("/apis", eventsRouter);
+app.use("/apis", eventsRouter); 
+app.use("/apis", notificationRouter);
 
 
 

@@ -9,8 +9,10 @@ const {
     getCoursByCategory,
     getCoursByPrice,
     getCoursByPopularity,
-    searchCours 
+    searchCours,
+    sendSessionReminders 
 } = require('../Controller/CoursController');
+const auth = require('../Middll/auth'); 
 
 /**
  * @swagger
@@ -210,5 +212,26 @@ router.get('/filter/popularity', getCoursByPopularity);
  *         description: Résultats de recherche des cours
  */
 router.get('/search', searchCours);
+
+/**
+ * @swagger
+ * /api/cours/sessions/{session_id}/notify:
+ *   post:
+ *     summary: Envoyer des rappels pour une session de cours
+ *     tags: [Cours]
+ *     parameters:
+ *       - in: path
+ *         name: session_id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID de la session
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Rappels envoyés avec succès
+ */
+router.post('/sessions/:session_id/notify', auth, sendSessionReminders);
 
 module.exports = router;

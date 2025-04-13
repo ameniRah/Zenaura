@@ -38,10 +38,10 @@ const CoursSessionSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'completed'],
+        enum: ['active', 'inactive', 'completed', 'scheduled', 'in-progress', 'cancelled'],
         required: true
     },
-    // Nouveau champ pour les participants
+    // Modification des participants pour inclure les champs de notification
     participants: [{
         user_id: {
             type: String,
@@ -50,6 +50,14 @@ const CoursSessionSchema = new Schema({
         inscription_date: {
             type: Date,
             default: Date.now
+        },
+        notified: {
+            type: Boolean,
+            default: false
+        },
+        reminders_sent: {
+            type: Number,
+            default: 0
         }
     }],
     created_at: {

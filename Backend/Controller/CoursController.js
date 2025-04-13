@@ -4,9 +4,12 @@ const CoursCategory = require('../Models/CoursCategory');
 const Cours = require('../Models/Cours');
 //coursseesion
 const CoursSession = require('../Models/CoursSession');
+//User Model
+const User = require('../Models/User');
 //Validation
 const { validateCourseCategory, validateCours, validateCoursSession  } = require('../Middll/Validate');
-
+//Email Service
+const { sendEmail, emailTemplates, scheduleReminder } = require('../mailer');
 
 //CoursCategory
 const createCategory = async (req, res) => {
@@ -86,8 +89,8 @@ const createCours = async (req, res) => {
         title: req.body.title,
         description: req.body.description,
         price: req.body.price,
-        category_id: req.body.category_id, // ID de catégorie
-        instructor_id: req.body.instructor_id, // ID d'instructeur
+        category_id: req.body.category_id,
+        instructor_id: req.body.instructor_id,
         created_at: new Date(),
         updated_at: new Date()
     });
@@ -102,7 +105,7 @@ const createCours = async (req, res) => {
 
 const getAllCours = async (req, res) => {
     try {
-        const cours = await Cours.find().populate('category_id instructor_id'); // Remplir les catégories et instructeurs
+        const cours = await Cours.find().populate('category_id instructor_id');
         res.status(200).json(cours);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -143,7 +146,7 @@ const updateCours = async (req, res) => {
 
 const deleteCours = async (req, res) => {
     try {
-        const cours = await Cours.findByIdAndDelete(req.params.id); // Utilisation de findByIdAndDelete
+        const cours = await Cours.findByIdAndDelete(req.params.id);
         if (!cours) return res.status(404).json({ message: 'Cours non trouvé' });
 
         res.status(200).json({ message: 'Cours supprimé' });
@@ -166,7 +169,7 @@ const createCoursSession = async (req, res) => {
         location,
         capacity,
         status,
-        participants: [], // Initialiser un tableau vide pour les participants
+        participants: [],
         created_at: new Date(),
         updated_at: new Date(),
     });
@@ -208,6 +211,25 @@ const updateCoursSession = async (req, res) => {
         const session = await CoursSession.findById(req.params.id);
         if (!session) return res.status(404).json({ message: 'Session non trouvée' });
 
+        // Vérifier s'il y a des changements d'horaire
+        const scheduleChanged = 
+            new Date(session.startdate).getTime() !== new Date(startdate).getTime() || 
+            new Date(session.enddate).getTime() !== new Date(enddate).getTime() || 
+            session.location !== location;
+
+        // Enregistrer les changements pour les notifications
+        const changes = [];
+        if (new Date(session.startdate).getTime() !== new Date(startdate).getTime()) {
+            changes.push(`Date de début modifiée: ${new Date(startdate).toLocaleString()}`);
+        }
+        if (new Date(session.enddate).getTime() !== new Date(enddate).getTime()) {
+            changes.push(`Date de fin modifiée: ${new Date(enddate).toLocaleString()}`);
+        }
+        if (session.location !== location) {
+            changes.push(`Lieu modifié: ${location}`);
+        }
+
+        // Mettre à jour la session
         session.title = title;
         session.cours_id = cours_id;
         session.video_url = video_url;
@@ -220,7 +242,38 @@ const updateCoursSession = async (req, res) => {
         session.updated_at = new Date();
 
         const updatedSession = await session.save();
-        res.status(200).json(updatedSession);
+
+        // Notifier les utilisateurs inscrits des changements d'horaire s'il y en a
+        if (scheduleChanged && session.participants.length > 0) {
+            const cours = await Cours.findById(session.cours_id);
+            
+            // Préparer les informations de session pour l'email
+            const sessionInfo = {
+                title: `${cours ? cours.title : 'Cours'} - ${session.title}`,
+                startdate: session.startdate,
+                enddate: session.enddate,
+                location: session.location
+            };
+
+            // Récupérer les emails des utilisateurs inscrits et envoyer des notifications
+            const userIds = session.participants.map(p => p.user_id);
+            const users = await User.find({ _id: { $in: userIds } });
+            
+            for (const user of users) {
+                if (user.email) {
+                    const emailOptions = emailTemplates.scheduleChange(user.email, sessionInfo, changes);
+                    await sendEmail(emailOptions);
+                    
+                    // Reprogrammer les rappels avec les nouvelles dates
+                    scheduleReminder(user.email, sessionInfo);
+                }
+            }
+        }
+
+        res.status(200).json({
+            ...updatedSession._doc,
+            notificationsEnvoyees: scheduleChanged ? session.participants.length : 0
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -259,11 +312,46 @@ const inscrireCoursSession = async (req, res) => {
             return res.status(400).json({ message: "Capacité maximale atteinte pour cette session" });
         }
 
+        // Récupérer les données du cours pour les notifications
+        const cours = await Cours.findById(session.cours_id);
+        if (!cours) {
+            return res.status(404).json({ message: "Cours introuvable" });
+        }
+
+        // Récupérer les informations de l'utilisateur pour l'email
+        const user = await User.findById(user_id);
+        if (!user || !user.email) {
+            return res.status(404).json({ message: "Informations utilisateur introuvables" });
+        }
+
         // Ajouter l'inscription
-        session.participants.push({ user_id });
+        session.participants.push({ 
+            user_id,
+            inscrit_le: new Date(),
+            notified: false,
+            reminders_sent: 0
+        });
         await session.save();
 
-        res.status(201).json({ message: "Inscription réussie", session });
+        // Préparer les informations de session pour l'email
+        const sessionInfo = {
+            title: `${cours.title} - ${session.title}`,
+            startdate: session.startdate,
+            enddate: session.enddate,
+            location: session.location
+        };
+
+        // Envoyer l'email de confirmation
+        const emailOptions = emailTemplates.inscription(user.email, sessionInfo);
+        await sendEmail(emailOptions);
+
+        // Programmer les rappels
+        scheduleReminder(user.email, sessionInfo);
+
+        res.status(201).json({ 
+            message: "Inscription réussie et notification envoyée", 
+            session 
+        });
 
     } catch (err) {
         console.log(err);
@@ -327,7 +415,7 @@ const getSessionsByUser = async (req, res) => {
         console.log(err);
         res.status(500).json({ message: "Erreur lors de la récupération des sessions de l'utilisateur" });
     }
-}; // Cette accolade fermante manquait ici
+};
 
 // Récupérer les cours par catégorie
 const getCoursByCategory = async (req, res) => {
@@ -414,6 +502,64 @@ const searchCours = async (req, res) => {
     }
 };
 
+// Envoyer des rappels pour une session
+const sendSessionReminders = async (req, res) => {
+    try {
+        const { session_id } = req.params;
+        
+        const session = await CoursSession.findById(session_id);
+        if (!session) {
+            return res.status(404).json({ message: "Session de cours introuvable" });
+        }
+        
+        const cours = await Cours.findById(session.cours_id);
+        if (!cours) {
+            return res.status(404).json({ message: "Cours introuvable" });
+        }
+        
+        // Préparer les informations de session pour l'email
+        const sessionInfo = {
+            title: `${cours.title} - ${session.title}`,
+            startdate: session.startdate,
+            enddate: session.enddate,
+            location: session.location
+        };
+        
+        // Récupérer les emails des utilisateurs inscrits
+        const userIds = session.participants.map(p => p.user_id);
+        const users = await User.find({ _id: { $in: userIds } });
+        
+        const results = [];
+        for (const user of users) {
+            if (user.email) {
+                const emailOptions = emailTemplates.reminder(user.email, sessionInfo);
+                const result = await sendEmail(emailOptions);
+                
+                if (result.success) {
+                    // Mettre à jour le compteur de rappels envoyés
+                    const participantIndex = session.participants.findIndex(p => p.user_id === user._id.toString());
+                    if (participantIndex !== -1) {
+                        session.participants[participantIndex].reminders_sent += 1;
+                    }
+                }
+                
+                results.push({ user: user._id, email: user.email, success: result.success });
+            }
+        }
+        
+        await session.save();
+        
+        res.status(200).json({ 
+            message: "Rappels envoyés", 
+            results 
+        });
+        
+    } catch (error) {
+        console.error("Erreur lors de l'envoi des rappels:", error);
+        res.status(500).json({ message: "Erreur serveur lors de l'envoi des rappels" });
+    }
+};
+
 module.exports = {
     //category
     createCategory,
@@ -445,5 +591,7 @@ module.exports = {
     //cours by popularity
     getCoursByPopularity,
     //search cours
-    searchCours
+    searchCours,
+    //notifications
+    sendSessionReminders
 };

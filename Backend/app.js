@@ -6,6 +6,9 @@ const mongoose = require("mongoose");
 const path = require("path");
 const { swaggerUi, swaggerSpec } = require('./swager');
 
+
+
+
 // Connexion MongoDB
 const db = require("./Config/db.json");
 
@@ -41,6 +44,9 @@ const messageApi = socketController(io); // Ce retour contient les fonctions RES
 // Importation des routes
 const postRouter = require("./Routes/Post");
 const commentaireRouter = require("./Routes/Commentaire");
+const groupeRouter = require("./Routes/group");
+
+
 
 // Configuration du moteur de vue
 app.set("views", path.join(__dirname, "views"));
@@ -49,11 +55,13 @@ app.set("view engine", "twig");
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 📌 Configuration des routes REST
 app.use("/post", postRouter);
 app.use("/commentaire", commentaireRouter);
+app.use("/group", groupeRouter);
 
 // Routes REST liées aux messages
 app.get("/message/conversation", messageApi.getConversationMessages);

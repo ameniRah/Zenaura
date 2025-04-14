@@ -1,5 +1,6 @@
 // Import du modèle de message depuis les modèles Mongoose
 const Message = require("../models/Message");
+const Group = require("../models/Group");
 
 // Import de la fonction uuidv4 pour générer des IDs uniques
 const { v4: uuidv4 } = require("uuid");
@@ -10,6 +11,7 @@ module.exports = function(io) {
 
     // Map pour stocker les utilisateurs connectés : clé = expediteurId, valeur = socket.id
     const users = new Map();
+    const groupUsers = new Map();
 
     // Map pour suivre les conversations actives entre utilisateurs
     // Clé = combinaison unique des deux utilisateurs (triés), valeur = objet contenant les messages et ID de conversation
@@ -139,6 +141,64 @@ module.exports = function(io) {
                 console.error("Erreur lors de l'envoi du message one-to-many :", error);
             }
         });
+//*********************************SOCKET GROUP****************** */
+// Gestion des groupes avec Socket.IO
+socket.on("joinGroup", (groupId) => {
+    // Ajouter l'utilisateur à ce groupe
+    if (!groupUsers.has(groupId)) {
+      groupUsers.set(groupId, new Set());
+    }
+    groupUsers.get(groupId).add(expediteurId);
+    
+    // Abonner l'utilisateur au canal du groupe
+    socket.join(`group:${groupId}`);
+    console.log(`Utilisateur ${expediteurId} a rejoint le groupe ${groupId}`);
+  });
+  
+  socket.on("leaveGroup", (groupId) => {
+    // Retirer l'utilisateur du groupe
+    if (groupUsers.has(groupId)) {
+      groupUsers.get(groupId).delete(expediteurId);
+    }
+    socket.leave(`group:${groupId}`);
+    console.log(`Utilisateur ${expediteurId} a quitté le groupe ${groupId}`);
+  });
+  
+  socket.on("sendGroupMessage", async (data) => {
+    try {
+      if (typeof data === "string") data = JSON.parse(data);
+      
+      // Vérifier que les données nécessaires sont présentes
+      if (!data.groupId || !data.contenu) {
+        console.error("Erreur : groupId et contenu sont nécessaires pour un message de groupe !");
+        return;
+      }
+      
+      // Créer le message
+      const message = {
+        expediteurId,
+        isGroupMessage: true,
+        groupId: data.groupId,
+        contenu: data.contenu,
+        dateEnvoi: new Date(),
+        status: 'livré'
+      };
+      
+      // Sauvegarder directement dans la base de données pour les messages de groupe
+      // pour avoir une persistance immédiate
+      const newMessage = await Message.create(message);
+      
+      // Envoyer le message à tous les membres du groupe
+      io.to(`group:${data.groupId}`).emit("newGroupMessage", {
+        ...message,
+        _id: newMessage._id  // Inclure l'ID généré par MongoDB
+      });
+      
+      console.log(`Message envoyé au groupe ${data.groupId}`);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du message de groupe :", error);
+    }
+  });
 
         // Lorsqu’un utilisateur se déconnecte
         socket.on("disconnect", async () => {
@@ -282,9 +342,15 @@ async function addReaction(req, res) {
         res.status(500).send("Erreur serveur");
     }
 }
+//************************CRUD GROUP********************************* */
+
     return { 
+        //fct message 
         getConversationMessages,
         getUserConversations,
         addReaction
+        //fct group
+       
+
     };
 };

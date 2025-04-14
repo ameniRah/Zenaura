@@ -5,7 +5,19 @@ const messageSchema = new mongoose.Schema({
   destinataireId: { type: String, required: true, },
   contenu: {type: String,required: true,},
   dateEnvoi: { type: Date,default: Date.now, },
-  conversationId: { type: String, required: true, index: true }, // Identifiant unique pour la conversation
+  isGroupMessage: {type: Boolean,default: false},
+  // Référence au groupe si c'est un message de groupe
+  groupId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group',
+    required: function() { return this.isGroupMessage; }
+  },
+  // Garder le conversationId pour les messages one-to-one
+  conversationId: { 
+    type: String, 
+    required: function() { return !this.isGroupMessage; },
+    index: true 
+  },
    reactions: [{
         userId: {
             type: mongoose.Schema.Types.ObjectId,

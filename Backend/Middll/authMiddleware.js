@@ -29,8 +29,15 @@ const authMiddleware = (req, res, next) => {
         return res.status(401).json({ message: 'Token invalide.' });
     }
 };
+const checkRole = (...roles)  =>  {
+  return (req, res, next) => {
+    // Vérifie si l'utilisateur est authentifié et a un rôle autorisé
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Accès refusé : rôle insuffisant" });
+    }
+    next(); // OK, passe à la suite
+  };
+};
 
 
-
-
-module.exports = authMiddleware;
+module.exports = {  authMiddleware, checkRole };

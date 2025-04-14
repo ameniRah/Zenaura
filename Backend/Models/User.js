@@ -16,8 +16,11 @@ const User = new Schema({
         type: String,
         enum: ['autorisé', 'non autorisé'],  // Valeurs autorisées
         default: 'autorisé'  // Par défaut, l'utilisateur est autorisé
+    },
+    profileImage: {
+        type: String, // Ce champ stockera le chemin de l'image
+        default: ''   // Par défaut, il n'y a pas d'image
     }
-    
 })
 
 module.exports = mongo.model('user', User) 

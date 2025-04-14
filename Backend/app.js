@@ -15,6 +15,7 @@ mongo.connect(db.url)
     });
 
 const app = express();
+app.use('/uploads', express.static('uploads'));
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "twig");
 app.use(express.json()); // Conversion des données JSON pour les requêtes

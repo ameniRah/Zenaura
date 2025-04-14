@@ -1,9 +1,11 @@
 const User = require("../Models/User");
+const Activity = require('../Models/ActivitySchema'); // Correspond au nom du fichier
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require("nodemailer"); // Pour envoyer des emails
 const crypto = require("crypto"); // Pour générer un OTP sécurisé
 const otpMap = new Map(); // Une structure temporaire pour stocker les OTPs associés aux emails
+
 
 
 // 📨 1️⃣ Fonction pour envoyer un OTP à l'email de l'utilisateur
@@ -89,7 +91,7 @@ async function register(req, res) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = new User({
+        const user = new User({
             nom,
             prenom,
             email,
@@ -99,12 +101,23 @@ async function register(req, res) {
         });
 
         const token = jwt.sign(
-            { id: newUser._id, email: newUser.email },
+            {
+                id: user._id,
+                email: user.email,
+                role: user.role
+            },
             process.env.JWT_SECRET,
             { expiresIn: '2h' }
         );
 
-        await newUser.save();
+        await user.save();
+        const newActivity = new Activity({
+            user: user._id,
+            action: 'Inscription réussie'
+        });
+        await newActivity.save();
+
+       
 
         res.status(201).json({
             message: 'Inscription réussie',
@@ -133,17 +146,28 @@ async function login(req, res) {
             });
         }
 
+
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Email ou mot de passe incorrect' });
         }
-
         const expiresIn = '2h';
         const token = jwt.sign(
-            { id: user._id, email: user.email },
+            {
+                id: user._id,
+                email: user.email,
+                role: user.role
+            },
             process.env.JWT_SECRET,
             { expiresIn }
         );  
+       const newActivity = new Activity({
+        user: user._id, // Remplace newUser par user ici
+        action: 'Connexion réussie'
+        });
+        await newActivity.save();
+
 
         console.log(`Token généré avec succès ! Durée de validité : ${expiresIn}`);
         res.status(200).json({
@@ -176,17 +200,49 @@ async function authorizeUser(req, res) {
 
 async function showusers(req, res) {
     try {
-        const users = await User.find();
-        res.status(200).send(users);
+        // Récupérer les paramètres de la requête
+        const { search, page = 1, limit = 10 } = req.query;
+
+        const skip = (page - 1) * limit; // Calculer le nombre d'éléments à ignorer pour la pagination
+          const query = {};
+        // Ajouter la recherche si le paramètre 'search' est fourni
+        if (search) {
+            query.nom = { $regex: search, $options: 'i' }; // Recherche insensible à la casse dans le nom
+        }
+
+        // Récupérer les utilisateurs en fonction de la recherche et de la pagination
+        const users = await User.find(query).skip(skip).limit(limit);
+        const totalUsers = await User.countDocuments(query); // Compter le total des utilisateurs
+
+        // Retourner les utilisateurs et la pagination
+        res.status(200).json({
+            users,
+            pagination: {
+                totalUsers,
+            }
+        });
+
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: 'Erreur serveur' });
     }
 }
 
+
 async function showusersbyId(req, res) {
+    const userId = req.params.id;
+     if (req.user.role !== 'admin' && req.user.id !== userId) {
+            return res.status(403).json({ message: "Accès refusé : vous ne pouvez voir que votre propre profil" });
+        }
     try {
         const user = await User.findById(req.params.id);
+        const newActivity = new Activity({
+            user: user._id,
+            action: 'show user by id réussie'
+        });
+        await newActivity.save();
+
+      
         res.status(200).send(user);
     } catch (err) {
         console.log(err);
@@ -195,9 +251,20 @@ async function showusersbyId(req, res) {
 }
 
 async function showByName(req, res) {
+    const userId = req.params.id;
+     if (req.user.role !== 'admin' && req.user.id !== userId) {
+            return res.status(403).json({ message: "Accès refusé : vous ne pouvez voir que votre propre profil" });
+        }
     try {
         const { name } = req.params.username;
         const user = await User.findOne({ name });
+        const newActivity = new Activity({
+            user: user._id,
+            action: 'show by name réussie'
+        });
+        await newActivity.save();
+
+       
         res.status(200).send(user);
     } catch (err) {
         console.log(err);
@@ -217,12 +284,34 @@ async function deleteusers(req, res) {
 
 async function updateuser(req, res) {
     try {
-        // Vérifier si le mot de passe est présent dans les nouvelles données
+        const userId = req.params.id;
+        // Ne hacher le mot de passe que si un nouveau mot de passe est fourni
         if (req.body.password) {
-            req.body.password = await bcrypt.hash(req.body.password, 10);
+            req.body.password = await bcrypt.hash(req.body.password, 10); // Hacher le mot de passe
         }
 
+        // Ne pas autoriser la mise à jour du statut
+        if (req.body.status) {
+            delete req.body.status;
+        }
+         if (req.user.role !== 'admin' && req.user.id !== userId) {
+            return res.status(403).json({ message: "Accès refusé : vous ne pouvez modifier que votre propre profil" });
+        }
+        // Mettre à jour l'utilisateur
         const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        console.log("Données reçues pour update :", req.body);
+        console.log("Mot de passe final envoyé à la base :", req.body.password);
+        const newActivity = new Activity({
+            user: user._id,
+            action: 'Modification réussie'
+        });
+        await newActivity.save();
+
+        
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
 
         res.status(200).send(user);
     } catch (err) {
@@ -230,5 +319,56 @@ async function updateuser(req, res) {
         res.status(500).json({ message: 'Erreur serveur' });
     }
 }
+// 🕓 Voir l'historique complet ou par utilisateur
+async function showActivities(req, res) {
+  try {
+    const userId = req.user.id;
 
-module.exports = {  showusers, showusersbyId, showByName, deleteusers, updateuser, register, login,sendOTP,verifyOTP,authorizeUser };
+    const activities = await Activity.find({ user: userId })
+      .populate('user', 'nom prenom') // récupère seulement le champ 'name'
+      .sort({ timestamp: -1 })
+      .exec();
+
+    res.status(200).json(activities);
+  } catch (err) {
+    console.error("Erreur lors de la récupération des activités :", err);
+    res.status(500).json({ message: "Erreur serveur lors de la récupération des activités." });
+  }
+}
+
+async function uploadProfile(req, res) {
+    try {
+        const userId = req.params.id;
+
+        // Vérifie si l'utilisateur est authentifié et autorisé
+        if (req.user.id !== userId && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Accès refusé : vous ne pouvez modifier que votre propre profil" });
+        }
+
+        // Vérifie si le fichier a été téléchargé
+        if (!req.file) {
+            return res.status(400).json({ message: "Aucune image téléchargée" });
+        }
+
+        // Récupère l'URL de l'image téléchargée
+        const imageUrl = `/uploads/profiles/${req.file.filename}`;
+
+        // Met à jour l'image de profil dans la base de données
+        const user = await User.findByIdAndUpdate(userId, { profileImage: imageUrl }, { new: true });
+
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+
+        res.status(200).json({ message: "Photo de profil téléchargée avec succès", user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+}
+
+
+
+
+
+module.exports = {  showusers, showusersbyId, showByName, deleteusers, updateuser, register, login,sendOTP,verifyOTP,authorizeUser ,showActivities,uploadProfile};

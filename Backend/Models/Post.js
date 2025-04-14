@@ -7,6 +7,7 @@ const PostSchema = new mongoose.Schema({
   titre: String,
   contenu: String,
   date_creation:Date,
+  image: String,
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User'}]
 });
 

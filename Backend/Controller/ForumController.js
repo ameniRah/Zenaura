@@ -2,23 +2,32 @@ const Post = require('../models/Post');
 const Commentaire = require('../models/Commentaire');
 const Message = require('../models/Message');
   //*********************CRUD POST******************* */
-    async function  addPost(req, res) {
-      try {
-        console.log(req.body);
-        const post = new Post({
-            idAuteur: req.body.idAuteur,
-            titre: req.body.titre,
-            contenu : req.body.contenu,
-            date_creation : new Date().toISOString(),
-            like : 0
+  async function addPost(req, res) {
+    try {
+      console.log("Fichier reçu:", req.file);
+      
+      const post = new Post({
+        idAuteur: req.body.idAuteur,
+        titre: req.body.titre,
+        contenu: req.body.contenu,
+        date_creation: new Date().toISOString(),
+        likes: [],
+        image: req.file ? req.file.path : null
       });
-        await post.save();
-        res.status(201).json({message: "Post ajouté avec succès",post});
-       
-      } catch (err) {
-        console.log(err);
-      }
+  
+      await post.save();
+  
+      res.status(201).json({
+        message: "Post ajouté avec succès",
+        post
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Erreur lors de l'ajout du post" });
     }
+  }
+  
+  
 
     async function getallPost(req, res) {
         try {

@@ -57,6 +57,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/uploads/posts', express.static('uploads/posts'));
 
 // 📌 Configuration des routes REST
 app.use("/post", postRouter);

@@ -1,7 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const postController = require("../Controller/ForumController");
+const upload = require('../Middll/uploads');
+const { addPost } = require('../Controller/ForumController');
+const multer = require("multer");
 
+
+  
 /**
  * @swagger
  * /post/addPost:
@@ -25,7 +30,19 @@ const postController = require("../Controller/ForumController");
  *       201:
  *         description: Post créé avec succès
  */
-router.post("/addPost", postController.addPost);
+
+// Configurer multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "uploads/"); // Dossier pour stocker l'image
+    },
+    filename: (req, file, cb) => {
+      const uniqueName = Date.now() + '-' + file.originalname;
+      cb(null, uniqueName);
+    }
+  });
+  
+router.post("/addPost", upload.single('image'),addPost);
 
 /**
  * @swagger

@@ -4,6 +4,8 @@ const db = require('./Config/db.json');
 const path = require('path');
 const UserRouter = require('./Routes/User');
 require('dotenv').config({ path: './.env' });
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./Config/swagger');
 ///console.log("Clé JWT secrète: ", process.env.JWT_SECRET); 
 
 mongo.connect(db.url)
@@ -17,6 +19,7 @@ mongo.connect(db.url)
 const app = express();
 app.use('/uploads', express.static('uploads'));
 app.set("views", path.join(__dirname, "views"));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.set("view engine", "twig");
 app.use(express.json()); // Conversion des données JSON pour les requêtes
 app.use('/user', UserRouter)

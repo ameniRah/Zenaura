@@ -1,3 +1,6 @@
+// Chargement des variables d'environnement
+require('dotenv').config();
+
 // Modules de base
 const express = require('express');
 const http = require('http');
@@ -11,7 +14,7 @@ const { swaggerUi, swaggerSpec } = require('./swagger');
 const validationMiddleware = require('./middleware/validation.middleware');
 
 // Configuration
-const db = require('./Config/db.json');
+const db = require('./config/db.json'); // Assurez-vous que le chemin est bien en minuscule
 const PORT = process.env.PORT || 3000;
 
 // Vérification de l'URL MongoDB
@@ -21,7 +24,7 @@ if (!db.urlnew) {
 }
 
 // Connexion à MongoDB
-mongoose.connect(db.urlnew)
+mongoose.connect(db.urlnew, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ Base de données connectée"))
   .catch((err) => console.error("❌ Erreur de connexion MongoDB :", err));
 
@@ -38,28 +41,53 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Swagger
+// Swagger docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Routes principales
+// === Importation des routes ===
 const authRoutes = require('./routes/auth.routes');
 const personalityTraitRoutes = require('./routes/personality-trait.routes');
 const testRoutes = require('./routes/test.routes');
+const dispoRouter = require('./Routes/Dispo');
+const rendezvousRouter = require('./Routes/RendezVous');
+const eventsRouter = require('./Routes/Evenement');
+const notificationRouter = require('./Routes/Notification');
+const coursCategoryRoutes = require('./Routes/CoursCategory');
+const coursRoutes = require('./Routes/Cours');
+const coursSessionRoutes = require('./Routes/CoursSession');
 
-const dispoRouter = require("./Routes/Dispo");
-const rendezvousRouter = require("./Routes/RendezVous");
-const eventsRouter = require("./Routes/Evenement");
-const notificationRouter = require("./Routes/Notification");
-
-// Utilisation des routes
+// === Utilisation des routes ===
 app.use('/api/auth', authRoutes);
 app.use('/api/personality-traits', personalityTraitRoutes);
 app.use('/api/tests', testRoutes);
+app.use('/apis', dispoRouter);
+app.use('/apis', rendezvousRouter);
+app.use('/apis', eventsRouter);
+app.use('/apis', notificationRouter);
+app.use('/api/coursecategories', coursCategoryRoutes);
+app.use('/api/cours', coursRoutes);
+app.use('/api/courssessions', coursSessionRoutes);
 
-app.use("/apis", dispoRouter);
-app.use("/apis", rendezvousRouter);
-app.use("/apis", eventsRouter); 
-app.use("/apis", notificationRouter);
+// Mise à jour d'une catégorie de cours (endpoint spécifique)
+const CoursCategory = require('./Models/CoursCategory');
+app.post('/api/coursecategories/update/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, description } = req.body;
+
+  try {
+    const updatedCategory = await CoursCategory.findByIdAndUpdate(
+      id,
+      { title, description },
+      { new: true }
+    );
+    if (!updatedCategory) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    res.status(200).json(updatedCategory);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Route de base
 app.get('/', (req, res) => {

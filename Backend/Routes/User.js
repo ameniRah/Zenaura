@@ -243,7 +243,7 @@ router.get('/activities', authMiddleware, checkRole("admin"), UserController.sho
 
 /**
  * @swagger
- * /activities/{userId}:
+ * /user/activities/{userId}:
  *   get:
  *     summary: Voir l'historique d'un utilisateur spécifique
  *     tags: [Activités]

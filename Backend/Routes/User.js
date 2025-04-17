@@ -225,7 +225,7 @@ router.post("/verify-otp", UserController.verifyOTP);
  *       200:
  *         description: Utilisateur autorisé
  */
-router.put("/authorizeUser/:id", checkRole("admin"), UserController.authorizeUser);
+router.put("/authorizeUser/:id", authMiddleware,checkRole("admin"), UserController.authorizeUser);
 
 /**
  * @swagger

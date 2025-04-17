@@ -1,0 +1,278 @@
+{
+	"info": {
+		"_postman_id": "1234567-89ab-cdef-0123-456789abcdef",
+		"name": "ZenAura API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"your_password\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tests",
+			"item": [
+				{
+					"name": "Create Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Sample Personality Test\",\n    \"description\": \"A test description\",\n    \"type\": \"personality\",\n    \"category\": \"psychological_assessment\",\n    \"duration\": {\n        \"minimum\": 15,\n        \"maximum\": 45,\n        \"estimated\": 30\n    },\n    \"configuration\": {\n        \"maxScore\": 100,\n        \"passingScore\": 70,\n        \"allowRetake\": true,\n        \"showResults\": true\n    },\n    \"questions\": [\"questionId1\", \"questionId2\"],\n    \"scoringAlgorithm\": \"algorithmId\",\n    \"metadata\": {\n        \"status\": \"active\",\n        \"version\": 1\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tests",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tests"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Tests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tests?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tests"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Test",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tests/{{testId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tests", "{{testId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Test",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Test Name\",\n    \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/tests/{{testId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tests", "{{testId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Test",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tests/{{testId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "tests", "{{testId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Personality Traits",
+			"item": [
+				{
+					"name": "Create Trait",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Openness\",\n    \"description\": \"Openness to experience\",\n    \"category\": \"Big Five\",\n    \"measurementScale\": {\n        \"min\": 0,\n        \"max\": 100\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/personality-traits",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "personality-traits"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Traits",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/personality-traits?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "personality-traits"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Trait",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/personality-traits/{{traitId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "personality-traits", "{{traitId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Trait",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Trait Name\",\n    \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/personality-traits/{{traitId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "personality-traits", "{{traitId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Trait",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/personality-traits/{{traitId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "personality-traits", "{{traitId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+} 

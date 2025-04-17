@@ -7,5 +7,8 @@ const { getConversationMessages, getUserConversations } = require('../Controller
 // Définir les routes REST
 router.get('/conversation', getConversationMessages);
 router.get('/conversations/:userId', getUserConversations);
+// Routes pour les réactions
+router.post('/messages/:messageId/reactions', auth, reactionController.toggleReaction);
+router.get('/messages/:messageId/reactions', auth, reactionController.getReactions);
 
 module.exports = router;

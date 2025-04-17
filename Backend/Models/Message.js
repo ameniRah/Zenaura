@@ -26,7 +26,8 @@ const messageSchema = new mongoose.Schema({
         },
         emoji: {
             type: String,  // L'emoji en chaîne de caractères
-            required: true
+            required: true,
+            enum: ['👍', '❤️', '😂', '😮', '😢', '😡']
         }
     }],
   status: { type: String, enum: ['livré', 'non-livré'], default: 'non-livré' }
@@ -37,4 +38,5 @@ const messageSchema = new mongoose.Schema({
 
 // Index pour accélérer les recherches par conversationId
 messageSchema.index({ conversationId: 1, date_creation: 1 });
+messageSchema.index({ 'reactions.emoji': 1 });
 module.exports = mongoose.model("Message", messageSchema);

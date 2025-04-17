@@ -11,17 +11,30 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: 'http://localhost:3000', // adapte le port si nécessaire
+      url: 'http://localhost:3000',
+    },
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
+  },
+  security: [
+    {
+      bearerAuth: [],
     },
   ],
 };
 
 const options = {
   swaggerDefinition,
-  apis: ['./Routes/*.js'], // ici, tu mets le chemin de tes fichiers route
+  apis: ['./Routes/*.js'],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
 
 module.exports = swaggerSpec;
-

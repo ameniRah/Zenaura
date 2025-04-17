@@ -251,26 +251,29 @@ async function showusersbyId(req, res) {
 }
 
 async function showByName(req, res) {
-    const userId = req.params.id;
-     if (req.user.role !== 'admin' && req.user.id !== userId) {
-            return res.status(403).json({ message: "Accès refusé : vous ne pouvez voir que votre propre profil" });
-        }
+    const { nom } = req.params; // Récupère le nom depuis l'URL
+    console.log("Nom de l'utilisateur dans l'URL :", nom); // Affiche le nom passé dans l'URL
+
     try {
-        const { name } = req.params.username;
-        const user = await User.findOne({ name });
+        const user = await User.findOne({ nom }); // Recherche l'utilisateur par son nom
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+
+        // Logique d'activité et réponse
         const newActivity = new Activity({
             user: user._id,
             action: 'show by name réussie'
         });
         await newActivity.save();
 
-       
         res.status(200).send(user);
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: 'Erreur serveur' });
     }
 }
+
 
 async function deleteusers(req, res) {
     try {

@@ -59,7 +59,7 @@ router.get('/showusers/:id', authMiddleware, UserController.showusersbyId);
  *       200:
  *         description: Utilisateur trouvé
  */
-router.get('/shownameuser/:username', authMiddleware, UserController.showByName);
+router.get('/shownameuser/:nom', authMiddleware, UserController.showByName);
 
 /**
  * @swagger

@@ -20,18 +20,14 @@ const CoursSchema = new Schema({
     },
     category_id: {
         type: Schema.Types.ObjectId,
-        ref: 'CoursCategory', 
+        ref: 'CoursCategory',
         required: true
     },
-
-    instructor_id: { type: String, required: true }, 
-
-    /*instructor_id: {
+    instructor_id: {
         type: Schema.Types.ObjectId,
-        ref: 'Instructor', // Référence à Instructor
+        ref: 'user', // Updated to match the model name in your User module
         required: true
-    },*/
-    
+    },
     created_at: {
         type: Date,
         default: Date.now

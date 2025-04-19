@@ -9,7 +9,8 @@ const CoursSessionSchema = new Schema({
         maxlength: 100
     },
     cours_id: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'Cours',
         required: true
     },
     video_url: {
@@ -41,10 +42,11 @@ const CoursSessionSchema = new Schema({
         enum: ['active', 'inactive', 'completed', 'scheduled', 'in-progress', 'cancelled'],
         required: true
     },
-    // Modification des participants pour inclure les champs de notification
+    // Modified participants array to use proper ObjectId references
     participants: [{
         user_id: {
-            type: String,
+            type: Schema.Types.ObjectId,
+            ref: 'user',
             required: true
         },
         inscription_date: {

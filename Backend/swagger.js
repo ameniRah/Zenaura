@@ -1,23 +1,18 @@
-const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
- 
+const swaggerJsdoc = require('swagger-jsdoc');
+
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'Zenaura API',
       version: '1.0.0',
-      description: 'Documentation de l’API de Zenaura',
+      description: 'Documentation de l\'API de Zenaura',
     },
-    servers: [
-      {
-        url: 'http://localhost:3000',
-      },
-    ],
   },
-  apis: ['./Routes/*.js'], // 📂 Où Swagger va chercher les commentaires JSDoc
+  apis: ['./Routes/*.js'], // Chemin vers vos fichiers de routes
 };
- 
-const swaggerSpec = swaggerJsDoc(options);
- 
+
+const swaggerSpec = swaggerJsdoc(options);
+
 module.exports = { swaggerUi, swaggerSpec };

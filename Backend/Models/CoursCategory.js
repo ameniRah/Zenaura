@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const CoursCategorySchema = new mongoose.Schema({
+const CoursCategorySchema = new Schema({
     title: {
         type: String,
         required: true,
@@ -25,5 +26,4 @@ const CoursCategorySchema = new mongoose.Schema({
     }
 });
 
-// Vérifiez si le modèle existe déjà avant de le définir
 module.exports = mongoose.models.CoursCategory || mongoose.model('CoursCategory', CoursCategorySchema);

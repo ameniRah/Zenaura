@@ -1,93 +1,86 @@
-<<<<<<< HEAD
 // Chargement des variables d'environnement en premier
-require('dotenv').config();
+require('dotenv').config({ path: './.env' });
 
 const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
+const path = require('path');
 const cors = require('cors');
+const app = express();
 const port = 3000;
-const { swaggerUi, swaggerSpec } = require('./swagger');
 
+// Swagger
+const { swaggerUi, swaggerSpec } = require('./swagger');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Importation du fichier de configuration de la base de données
-const dbConfig = require('./config/db.json');
+const dbConfig = require('./Config/db.json');
 
 // Connexion à MongoDB
-mongoose.connect(dbConfig.urlnew, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('Error connecting to MongoDB:', err));
-  
-// Middleware pour parser le corps des requêtes en JSON
-app.use(express.json());
-app.use(cors());
+mongoose.connect(dbConfig.urlnew || dbConfig.url, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch((err) => console.error('Error connecting to MongoDB:', err));
 
-// Importer le modèle
+// Middleware
+app.use(express.json()); // Pour analyser les requêtes JSON
+app.use(cors());         // Pour gérer les CORS
+app.use('/uploads', express.static('uploads')); // Pour servir les fichiers statiques (uploads)
+
+// Vues
+app.set("views", path.join(__dirname, "views")); // Définir le dossier des vues
+app.set("view engine", "twig");                  // Définir le moteur de vues comme Twig
+
+// ======== ROUTES ========
+const testRoutes = require('./Routes/testRoutes'); // Ajustez le chemin selon votre structure
+app.use('/api/test', testRoutes);
+// Routes pour les utilisateurs
+const UserRouter = require('./Routes/User');
+app.use('/user', UserRouter);
+
+// Routes pour les catégories de cours
 const CoursCategory = require('./Models/CoursCategory');
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
- 
-// Importation des routes pour CoursCategory
 const coursCategoryRoutes = require('./Routes/CoursCategory');
 app.use('/api/coursecategories', coursCategoryRoutes);
 
-// Route pour mettre à jour une catégorie de cours
-app.post('/api/coursecategories/update/:id', async (req, res) => {
-  const { id } = req.params;  // Récupère l'ID de la catégorie
-  const { title, description } = req.body;  // Récupère les nouvelles données pour la catégorie
-
-  try {
-      const updatedCategory = await CoursCategory.findByIdAndUpdate(id, { title, description }, { new: true });
-      if (!updatedCategory) {
-          return res.status(404).json({ message: 'Category not found' });
-      }
-      res.status(200).json(updatedCategory);
-  } catch (error) {
-      res.status(500).json({ message: error.message });
-  }
-});
-
-// Importation des routes pour Cours
+// Routes pour les cours
 const coursRoutes = require('./Routes/Cours');
-app.use('/api/cours', coursRoutes);  // Nouvelle route pour les cours
+app.use('/api/cours', coursRoutes);
 
-// Importation des routes pour Courssession
+// Routes pour les sessions de cours
 const coursSessionRoutes = require('./Routes/CoursSession');
 app.use('/api/courssessions', coursSessionRoutes);
 
+// Route pour mettre à jour une catégorie de cours
+app.post('/api/coursecategories/update/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, description } = req.body;
+  
+  try {
+    const updatedCategory = await CoursCategory.findByIdAndUpdate(
+      id,
+      { title, description },
+      { new: true }
+    );
+    
+    if (!updatedCategory) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    
+    res.status(200).json(updatedCategory);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
-// Route par défaut pour tester l'API
+// Route par défaut
 app.get('/', (req, res) => {
   res.send('Hello World!');
-=======
-const express = require('express');
-const mongo = require('mongoose');
-const db = require('./Config/db.json');
-const path = require('path');
-const UserRouter = require('./Routes/User');
-require('dotenv').config({ path: './.env' });
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./Config/swagger');
-///console.log("Clé JWT secrète: ", process.env.JWT_SECRET); 
+});
 
-mongo.connect(db.url)
-    .then(() => {
-        console.log("Database connected");
-    })
-    .catch((err) => {
-        console.error("Database connection error:", err);
-    });
-
-const app = express();
-app.use('/uploads', express.static('uploads'));
-app.set("views", path.join(__dirname, "views"));
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.set("view engine", "twig");
-app.use(express.json()); // Conversion des données JSON pour les requêtes
-app.use('/user', UserRouter)
-
+// Lancement du serveur
 const server = require('http').createServer(app);
-
-server.listen(3000, () => {
-    console.log("Server running on port 3000");
->>>>>>> user
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });

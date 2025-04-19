@@ -7,7 +7,7 @@ const CoursSession = require('../Models/CoursSession');
 //User Model
 const User = require('../Models/User');
 //Validation
-const { validateCourseCategory, validateCours, validateCoursSession  } = require('../Middll/Validate');
+const { validateCourseCategory, validateCours, validateCoursSession  } = require('../Middll/ValidateCours');
 //Email Service
 const { sendEmail, emailTemplates, scheduleReminder } = require('../mailer');
 
@@ -302,7 +302,7 @@ const inscrireCoursSession = async (req, res) => {
         }
 
         // Vérifier si déjà inscrit
-        const dejaInscrit = session.participants.some(p => p.user_id === user_id);
+        const dejaInscrit = session.participants.some(p => p.user_id.toString() === user_id);
         if (dejaInscrit) {
             return res.status(400).json({ message: "L'utilisateur est déjà inscrit à cette session" });
         }
@@ -315,19 +315,24 @@ const inscrireCoursSession = async (req, res) => {
         // Récupérer les données du cours pour les notifications
         const cours = await Cours.findById(session.cours_id);
         if (!cours) {
-            return res.status(404).json({ message: "Cours introuvable" });
+            console.log(`Avertissement: Cours avec ID ${session.cours_id} non trouvé`);
         }
 
         // Récupérer les informations de l'utilisateur pour l'email
         const user = await User.findById(user_id);
-        if (!user || !user.email) {
-            return res.status(404).json({ message: "Informations utilisateur introuvables" });
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur introuvable" });
+        }
+        
+        if (!user.email) {
+            console.log(`Avertissement: L'utilisateur ${user_id} n'a pas d'adresse email`);
+            return res.status(400).json({ message: "L'utilisateur n'a pas d'adresse email pour recevoir les notifications" });
         }
 
         // Ajouter l'inscription
         session.participants.push({ 
             user_id,
-            inscrit_le: new Date(),
+            inscription_date: new Date(),
             notified: false,
             reminders_sent: 0
         });
@@ -335,26 +340,51 @@ const inscrireCoursSession = async (req, res) => {
 
         // Préparer les informations de session pour l'email
         const sessionInfo = {
-            title: `${cours.title} - ${session.title}`,
+            title: `${cours ? cours.title : 'Cours'} - ${session.title}`,
             startdate: session.startdate,
             enddate: session.enddate,
             location: session.location
         };
 
+        console.log(`Préparation de l'email pour l'utilisateur ${user.email} avec les informations:`, sessionInfo);
+
         // Envoyer l'email de confirmation
-        const emailOptions = emailTemplates.inscription(user.email, sessionInfo);
-        await sendEmail(emailOptions);
-
-        // Programmer les rappels
-        scheduleReminder(user.email, sessionInfo);
-
-        res.status(201).json({ 
-            message: "Inscription réussie et notification envoyée", 
-            session 
-        });
-
+        try {
+            const emailOptions = emailTemplates.inscription(user.email, sessionInfo);
+            console.log("Options email préparées:", emailOptions);
+            
+            const emailResult = await sendEmail(emailOptions);
+            console.log("Résultat de l'envoi d'email:", emailResult);
+            
+            // Marquer l'utilisateur comme notifié
+            const participantIndex = session.participants.findIndex(p => p.user_id.toString() === user_id);
+            if (participantIndex !== -1) {
+                session.participants[participantIndex].notified = true;
+                await session.save();
+            }
+            
+            // Programmer les rappels
+            const reminderResult = scheduleReminder(user.email, sessionInfo);
+            console.log("Résultat de la programmation des rappels:", reminderResult);
+            
+            return res.status(201).json({ 
+                message: "Inscription réussie et notification envoyée", 
+                session,
+                emailSent: true
+            });
+        } catch (emailError) {
+            console.error("Erreur lors de l'envoi de l'email:", emailError);
+            
+            // L'inscription est réussie même si l'email échoue
+            return res.status(201).json({ 
+                message: "Inscription réussie mais échec de l'envoi de la notification", 
+                session,
+                emailSent: false,
+                emailError: emailError.message
+            });
+        }
     } catch (err) {
-        console.log(err);
+        console.error("Erreur lors de l'inscription:", err);
         res.status(500).json({ message: "Erreur lors de l'inscription à la session de cours" });
     }
 };

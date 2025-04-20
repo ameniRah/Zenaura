@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const evenementController = require("../Controller/PlanningController");
+const { authMiddleware, checkRole } = require('../Middll/authMiddleware');
+
 
 /**
  * @swagger
@@ -33,7 +35,7 @@ const evenementController = require("../Controller/PlanningController");
  *       201:
  *         description: Événement ajouté avec succès
  */
-router.post("/evenements", evenementController.addEvenement);
+router.post("/evenements",authMiddleware,checkRole("admin"), evenementController.addEvenement);
 
 /**
  * @swagger
@@ -45,7 +47,7 @@ router.post("/evenements", evenementController.addEvenement);
  *       200:
  *         description: Liste des événements
  */
-router.get("/evenements", evenementController.getAllEvenements);
+router.get("/evenements",authMiddleware,checkRole("admin"), evenementController.getAllEvenements);
 
 /**
  * @swagger
@@ -64,7 +66,7 @@ router.get("/evenements", evenementController.getAllEvenements);
  *       200:
  *         description: Détails de l'événement
  */
-router.get("/evenements/:id", evenementController.getEvenementById);
+router.get("/evenements/:id",authMiddleware,checkRole("admin","patient"), evenementController.getEvenementById);
 
 /**
  * @swagger
@@ -96,7 +98,7 @@ router.get("/evenements/:id", evenementController.getEvenementById);
  *       200:
  *         description: Événement mis à jour
  */
-router.put("/evenements/:id", evenementController.updateEvenement);
+router.put("/evenements/:id",authMiddleware,checkRole("admin"), evenementController.updateEvenement);
 
 /**
  * @swagger
@@ -115,7 +117,7 @@ router.put("/evenements/:id", evenementController.updateEvenement);
  *       200:
  *         description: Événement supprimé
  */
-router.delete("/evenements/:id", evenementController.deleteEvenement);
+router.delete("/evenements/:id",authMiddleware,checkRole("admin"), evenementController.deleteEvenement);
 
 /**
  * @swagger
@@ -138,7 +140,7 @@ router.delete("/evenements/:id", evenementController.deleteEvenement);
  *       201:
  *         description: Patient inscrit
  */
-router.post("/inscriptions", evenementController.inscrireEvenement);
+router.post("/inscriptions",authMiddleware,checkRole("admin","patient"), evenementController.inscrireEvenement);
 
 /**
  * @swagger
@@ -157,7 +159,7 @@ router.post("/inscriptions", evenementController.inscrireEvenement);
  *       200:
  *         description: Liste des inscriptions
  */
-router.get("/inscriptions/:id_evenement", evenementController.getInscriptionsByEvenement);
+router.get("/inscriptions/:id_evenement",authMiddleware,checkRole("admin","patient"), evenementController.getInscriptionsByEvenement);
 
 /**
  * @swagger
@@ -182,6 +184,6 @@ router.get("/inscriptions/:id_evenement", evenementController.getInscriptionsByE
  *       200:
  *         description: Inscription annulée
  */
-router.delete("/inscriptions/:id_evenement/:id_patient", evenementController.annulerInscription);
+router.delete("/inscriptions/:id_evenement/:id_patient",authMiddleware,checkRole("admin","patient"), evenementController.annulerInscription);
 
 module.exports = router;

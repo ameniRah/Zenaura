@@ -1,10 +1,10 @@
 const cron = require('node-cron');
-const Notification = require('./models/Notification');
-const Patient = require('./models/Patient');
-const sendSMS = require('./utils/sendSMS'); // ta fonction d'envoi
-const sendEmail = require('./utils/sendEmail'); // si tu veux aussi envoyer un mail
+const Notification = require('../Models/Notification');
+//const sendSMS = require('../Utils/sendSMS'); // ta fonction d'envoi
+const sendEmail = require('../Utils/sendEmail'); // si tu veux aussi envoyer un mail
+const User = require('../Models/User');
 
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('*/2 * * * *', async () => {
   console.log("🔁 Vérification des notifications à envoyer...");
 
   try {
@@ -16,18 +16,18 @@ cron.schedule('*/5 * * * *', async () => {
     });
 
     for (const notif of notifications) {
-      const patient = await Patient.findById(notif.id_patient);
+      const user = await User.findById(notif.id_patient);
 
-      if (!patient) continue;
+      if (!user) continue;
 
       // ✅ Envoi du rappel
-      await sendSMS(patient.telephone, notif.message);
-      await sendEmail(patient.email, "Rappel", notif.message);
+      //await sendSMS(user.telephone, notif.message);
+      await sendEmail(user.email, "Rappel", notif.message);
 
       notif.envoye = true;
       await notif.save();
 
-      console.log(`✅ Notification envoyée au patient ${patient.nom}`);
+      console.log(`✅ Notification envoyée au patient ${user.nom}`);
     }
   } catch (err) {
     console.error("❌ Erreur dans le cron des rappels :", err);

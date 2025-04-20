@@ -3,8 +3,8 @@ const mongo=require('mongoose')
 const Schema=mongo.Schema
 
 const notificationSchema = new Schema({
-  //id_patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient", required: true },
-  id_patient:{ type: mongo.Schema.Types.ObjectId },
+  id_patient: { type: mongo.Schema.Types.ObjectId, ref: "User", required: true },
+  //id_patient:{ type: mongo.Schema.Types.ObjectId },
   type: { type: String, enum: ["rendezvous", "evenement"], required: true },
   id_cible: { type: mongo.Schema.Types.ObjectId, required: true }, // id du rendez-vous ou événement
   message: { type: String, required: true },

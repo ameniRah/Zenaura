@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const dispoController = require("../Controller/PlanningController");
+const { authMiddleware, checkRole } = require('../Middll/authMiddleware');
+
 
 /**
  * @swagger
@@ -35,7 +37,7 @@ const dispoController = require("../Controller/PlanningController");
  *       201:
  *         description: Disponibilité ajoutée avec succès
  */
-router.post("/disponibilite", dispoController.addDisponibilite);
+router.post("/disponibilite", authMiddleware,checkRole("admin"), dispoController.addDisponibilite);
 
 /**
  * @swagger
@@ -48,7 +50,7 @@ router.post("/disponibilite", dispoController.addDisponibilite);
  *       200:
  *         description: Liste des disponibilités
  */
-router.get("/disponibilites", dispoController.getAllDisponibilites);
+router.get("/disponibilites",authMiddleware,checkRole("admin"), dispoController.getAllDisponibilites);
 
 /**
  * @swagger
@@ -68,7 +70,7 @@ router.get("/disponibilites", dispoController.getAllDisponibilites);
  *       200:
  *         description: Détails de la disponibilité
  */
-router.get("/disponibilitesByid/:id", dispoController.getDisponibiliteById);
+router.get("/disponibilitesByid/:id",authMiddleware,checkRole("admin"), dispoController.getDisponibiliteById);
 
 /**
  * @swagger
@@ -88,7 +90,7 @@ router.get("/disponibilitesByid/:id", dispoController.getDisponibiliteById);
  *       200:
  *         description: Liste des disponibilités du psychologue
  */
-router.get("/disponibilites/psychologue/:id_psychologue", dispoController.getDisponibilitesByPsychologue);
+router.get("/disponibilites/psychologue/:id_psychologue",authMiddleware,checkRole("admin"), dispoController.getDisponibilitesByPsychologue);
 
 /**
  * @swagger
@@ -108,7 +110,7 @@ router.get("/disponibilites/psychologue/:id_psychologue", dispoController.getDis
  *       200:
  *         description: Liste des disponibilités filtrées par statut
  */
-router.get("/disponibilites/statut/:statut", dispoController.getDisponibilitesByStatut);
+router.get("/disponibilites/statut/:statut",authMiddleware,checkRole("admin"), dispoController.getDisponibilitesByStatut);
 
 /**
  * @swagger
@@ -128,7 +130,7 @@ router.get("/disponibilites/statut/:statut", dispoController.getDisponibilitesBy
  *       200:
  *         description: Disponibilité supprimée
  */
-router.delete("/disponibilites/:id", dispoController.deleteDisponibilite);
+router.delete("/disponibilites/:id",authMiddleware,checkRole("admin"), dispoController.deleteDisponibilite);
 
 /**
  * @swagger
@@ -161,6 +163,6 @@ router.delete("/disponibilites/:id", dispoController.deleteDisponibilite);
  *       200:
  *         description: Disponibilité mise à jour
  */
-router.put("/disponibilites/:id", dispoController.updateDisponibilite);
+router.put("/disponibilites/:id",authMiddleware,checkRole("admin"), dispoController.updateDisponibilite);
 
 module.exports = router;

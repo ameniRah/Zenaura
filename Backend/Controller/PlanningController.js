@@ -7,15 +7,15 @@ const Notification = require("../Models/Notification");
 // ✅ Ajouter une disponibilité
 async function addDisponibilite(req, res) {
     try {
+      const userId = req.user.id; // Récupéré via le token décodé
       console.log(req.body);
       const disponibilite = new Disponibilities({
-        id_psychologue: req.body.id_psychologue,
+        id_psychologue: userId,
         date: req.body.date,
         heure_debut: req.body.heure_debut,
         heure_fin: req.body.heure_fin,
         statut: req.body.statut // "disponible", "occupé", "absent"
       });
-  
       await disponibilite.save();
       res.status(201).json({ message: "Disponibilité ajoutée avec succès", disponibilite });
     } catch (err) {
@@ -98,6 +98,8 @@ async function addDisponibilite(req, res) {
 // ✅ Ajouter un rendez-vous (avec vérification des disponibilités + notification)
 async function addRendezVous(req, res) {
   try {
+    const userId = req.user.id; // Récupéré via le token décodé
+
     console.log(req.body);
 
     // 🔎 Vérifier la disponibilité du psychologue
@@ -118,7 +120,7 @@ async function addRendezVous(req, res) {
     // 📝 Créer le rendez-vous
     const rendezVous = new RendezVous({
       id_psychologue: req.body.id_psychologue,
-      id_patient: req.body.id_patient,
+      id_patient: userId,
       date: req.body.date,
       heure: req.body.heure,
       motif: req.body.motif,
@@ -255,6 +257,7 @@ async function getRendezVousByStatut(req, res) {
 // ✅ Ajouter un événement
 async function addEvenement(req, res) {
   try {
+    
       console.log(req.body);
 
       const nouvelEvenement = new Evenement({
@@ -337,7 +340,9 @@ async function deleteEvenement(req, res) {
 // ✅ Inscrire un patient à un événement (avec notification)
 async function inscrireEvenement(req, res) {
   try {
-    const { id_evenement, id_patient } = req.body;
+        const userId = req.user.id; // Récupéré via le token décodé
+
+    const { id_evenement } = req.body;
 
     const evenement = await Evenement.findById(id_evenement);
     if (!evenement) {
@@ -345,7 +350,7 @@ async function inscrireEvenement(req, res) {
     }
 
     // 🔁 Vérifier si déjà inscrit
-    const dejaInscrit = evenement.participants.some(p => p.id_patient === id_patient);
+    const dejaInscrit = evenement.participants.some(p => p.id_participant.toString() === userId);
     if (dejaInscrit) {
       return res.status(400).json({ message: "Le patient est déjà inscrit" });
     }
@@ -356,7 +361,7 @@ async function inscrireEvenement(req, res) {
     }
 
     // ➕ Ajouter l'inscription
-    evenement.participants.push({ id_patient });
+    evenement.participants.push({ id_participant: userId });
     await evenement.save();
 
     // 🔔 Créer la notification pour le patient
@@ -377,7 +382,7 @@ async function inscrireEvenement(req, res) {
     const dateRappelMoins1h = new Date(date.getTime() - 60 * 60 * 1000);
     const message = `Vous êtes inscrit à l'événement "${evenement.titre}" prévu le ${dateStr} à ${heureStr}.`;
     const notification = new Notification({
-      id_patient,
+      id_patient: userId,
       type: "evenement",
       id_cible: evenement._id,
       message,

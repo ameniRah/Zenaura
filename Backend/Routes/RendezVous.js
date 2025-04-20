@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const rendezVousController = require("../Controller/PlanningController");
+const { authMiddleware, checkRole } = require('../Middll/authMiddleware');
+
 
 /**
  * @swagger
@@ -35,7 +37,7 @@ const rendezVousController = require("../Controller/PlanningController");
  *       201:
  *         description: Rendez-vous ajouté
  */
-router.post("/rendezVous", rendezVousController.addRendezVous);
+router.post("/rendezVous",authMiddleware,checkRole("patient"), rendezVousController.addRendezVous);
 
 /**
  * @swagger
@@ -47,7 +49,7 @@ router.post("/rendezVous", rendezVousController.addRendezVous);
  *       200:
  *         description: Liste de tous les rendez-vous
  */
-router.get("/rendezVous", rendezVousController.getAllRendezVous);
+router.get("/rendezVous",authMiddleware,checkRole("admin","patient"), rendezVousController.getAllRendezVous);
 
 /**
  * @swagger
@@ -66,7 +68,7 @@ router.get("/rendezVous", rendezVousController.getAllRendezVous);
  *       200:
  *         description: Détails du rendez-vous
  */
-router.get("/rendezVousById/:id", rendezVousController.getRendezVousById);
+router.get("/rendezVousById/:id",authMiddleware,checkRole("admin","patient"), rendezVousController.getRendezVousById);
 
 /**
  * @swagger
@@ -85,7 +87,7 @@ router.get("/rendezVousById/:id", rendezVousController.getRendezVousById);
  *       200:
  *         description: Liste des rendez-vous
  */
-router.get("/rendezVous/Psychologue/:id_psychologue", rendezVousController.getRendezVousByPsychologue);
+router.get("/rendezVous/Psychologue/:id_psychologue",authMiddleware,checkRole("admin","patient"), rendezVousController.getRendezVousByPsychologue);
 
 /**
  * @swagger
@@ -116,7 +118,7 @@ router.get("/rendezVous/Psychologue/:id_psychologue", rendezVousController.getRe
  *       200:
  *         description: Rendez-vous mis à jour
  */
-router.put("/rendezVous/:id", rendezVousController.updateRendezVous);
+router.put("/rendezVous/:id",authMiddleware,checkRole("patient"), rendezVousController.updateRendezVous);
 
 /**
  * @swagger
@@ -135,7 +137,7 @@ router.put("/rendezVous/:id", rendezVousController.updateRendezVous);
  *       200:
  *         description: Rendez-vous supprimé
  */
-router.delete("/rendezVous/:id", rendezVousController.deleteRendezVous);
+router.delete("/rendezVous/:id",authMiddleware,checkRole("patient"), rendezVousController.deleteRendezVous);
 
 /**
  * @swagger
@@ -155,7 +157,7 @@ router.delete("/rendezVous/:id", rendezVousController.deleteRendezVous);
  *       200:
  *         description: Liste des rendez-vous filtrés par statut
  */
-router.get("/rendezVous/statut/:statut", rendezVousController.getRendezVousByStatut);
+router.get("/rendezVous/statut/:statut",authMiddleware,checkRole("admin","patient"), rendezVousController.getRendezVousByStatut);
 
 
 module.exports = router;

@@ -1,0 +1,24 @@
+{
+  "name": "zenaura",
+  "version": "1.0.0",
+  "description": "fisrt version",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+    "dev": "nodemon app.js",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ameniRah/Zenaura.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ameniRah/Zenaura/issues"
+  },
+  "homepage": "https://github.com/ameniRah/Zenaura#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

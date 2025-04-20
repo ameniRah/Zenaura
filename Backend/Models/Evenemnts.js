@@ -10,7 +10,7 @@ const Evenemnts = new Schema({
   capacite: Number,
   participants: [
     {
-      id_patient: { type: mongoose.Schema.Types.ObjectId },
+      id_participant: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
       inscrit_le: { type: Date, default: Date.now }
     }
   ]

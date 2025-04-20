@@ -2,6 +2,7 @@ const http = require("http");
 const express = require("express");
 const path = require("path");
 const { swaggerUi, swaggerSpec } = require('./swagger');
+const socketIo = require("socket.io");
 
 
 
@@ -103,11 +104,49 @@ app.post('/api/coursecategories/update/:id', async (req, res) => {
   }
 });
 
-// Route par défaut
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+// Création de l'application Express
+
+// Création du serveur HTTP + WebSocket
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "*", // Autoriser les requêtes depuis toutes les origines
+    methods: ["GET", "POST"]
+  }
 });
 
+// Importation des contrôleurs
+const socketController = require("./Controller/socketController"); // Gestion WebSocket
+
+// Initialiser la logique WebSocket avec io
+const messageApi = socketController(io); // Ce retour contient les fonctions REST
+//
+
+// Importation des routes
+const postRouter = require("./Routes/Post");
+const commentaireRouter = require("./Routes/Commentaire");
+const groupeRouter = require("./Routes/group");
+
+
+
+// Configuration du moteur de vue
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "twig");
+
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/uploads/posts', express.static('uploads/posts'));
+
+// 📌 Configuration des routes REST
+app.use("/post", postRouter);
+app.use("/commentaire", commentaireRouter);
+app.use("/group", groupeRouter);
+
+// Routes REST liées aux messages
+app.get("/message/conversation", messageApi.getConversationMessages);
+app.get("/message/conversations/:userId", messageApi.getUserConversations);
+
 // Création et démarrage du serveur
-const server = http.createServer(app);
 server.listen(3000, () => console.log("✅ Server is running on port 3000"));

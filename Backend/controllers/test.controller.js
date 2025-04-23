@@ -1,4 +1,4 @@
-const BaseController = require('./base.controller');
+/* const BaseController = require('./base.controller');
 const Test = require('../models/test.model');
 const mongoose = require('mongoose');
 
@@ -219,4 +219,4 @@ class TestController extends BaseController {
   };
 }
 
-module.exports = new TestController();
+module.exports = new TestController(); *

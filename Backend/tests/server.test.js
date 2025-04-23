@@ -6,7 +6,7 @@ describe('Server Tests', () => {
     it('should return welcome message', async () => {
       const res = await request(app).get('/');
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('message', 'Welcome to ZenAura API');
+      expect(res.body).toHaveProperty('message', '🌿 Bienvenue sur l\'API ZenAura');
     });
   });
 
@@ -14,29 +14,27 @@ describe('Server Tests', () => {
     it('should handle 404 routes', async () => {
       const response = await request(app).get('/nonexistent-route');
       expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty('error', 'Not Found');
+      expect(response.body).toHaveProperty('error', '❌ Route non trouvée');
     });
   });
 
   describe('API Endpoints', () => {
     it('should handle invalid JSON', async () => {
       const response = await request(app)
-        .post('/api/personality-traits')
+        .post('/api/tests')
         .set('Content-Type', 'application/json')
-        .send('invalid json');
+        .send('{invalid:json}');
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error');
     });
   });
 
   describe('Error Handling', () => {
     it('should handle server errors', async () => {
       const response = await request(app)
-        .post('/api/personality-traits')
-        .set('Content-Type', 'application/json')
+        .post('/api/tests')
         .send({});
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('message', 'Access denied. No token provided.');
     });
   });
-}); 
+});

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const questionController = require('../controllers/questionController');
+const questionController = require('../Controller/question.controller');
 
 // CRUD Routes
 router.post('/questions', questionController.createQuestion);

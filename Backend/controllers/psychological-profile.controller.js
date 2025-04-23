@@ -1,4 +1,4 @@
-const PsychologicalProfile = require('../models/PsychologicalProfile');
+/* const PsychologicalProfile = require('../models/PsychologicalProfile');
 
 exports.createProfile = async (req, res) => {
   try {
@@ -84,4 +84,4 @@ exports.getProfilesByUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+}; */

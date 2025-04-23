@@ -1,4 +1,4 @@
-const TestRecommendation = require('../models/test-recommendation.model');
+/* const TestRecommendation = require('../models/test-recommendation.model');
 const User = require('../models/user.model');
 const Test = require('../models/test.model');
 
@@ -141,4 +141,4 @@ exports.getRecommendationsByStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+}; */

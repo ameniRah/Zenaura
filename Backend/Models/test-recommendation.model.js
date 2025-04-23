@@ -137,6 +137,21 @@ const testRecommendationSchema = new mongoose.Schema({
       type: Boolean,
       default: true
     }
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  testType: {
+    type: String,
+    required: true
+  },
+  reason: String,
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high'],
+    default: 'medium'
   }
 }, {
   timestamps: true

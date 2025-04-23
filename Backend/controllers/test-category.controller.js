@@ -1,4 +1,4 @@
-const TestCategory = require('../models/TestCategory');
+/* const TestCategory = require('../models/TestCategory');
 
 exports.createCategory = async (req, res) => {
   try {
@@ -58,4 +58,4 @@ exports.deleteCategory = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+}; */

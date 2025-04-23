@@ -1,4 +1,4 @@
-const PsychologicalReport = require('../models/PsychologicalReport');
+/* const PsychologicalReport = require('../models/PsychologicalReport');
 
 exports.createReport = async (req, res) => {
   try {
@@ -116,4 +116,4 @@ exports.updateReportStatus = async (req, res) => {
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
-};
+}; */

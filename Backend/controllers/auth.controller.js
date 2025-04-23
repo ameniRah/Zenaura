@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+/*const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const BaseController = require('./base.controller');
@@ -75,4 +75,4 @@ class AuthController extends BaseController {
     }
 }
 
-module.exports = new AuthController(); 
+module.exports = new AuthController(); */

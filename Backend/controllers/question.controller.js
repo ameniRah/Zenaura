@@ -1,4 +1,4 @@
-const question = require('../models/question');
+/* const question = require('../models/question');
 
 exports.createQuestion = async (req, res) => {
   try {
@@ -82,4 +82,4 @@ exports.getQuestionsByType = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+}; */

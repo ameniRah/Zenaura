@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { validTraitData } = require('../test-helpers');
-const PersonalityTrait = require('../../models/personality-trait.model');
+const PersonalityTrait = require('../../Models/personality-trait.model');
 
 describe('PersonalityTrait Model Test', () => {
   beforeEach(async () => {

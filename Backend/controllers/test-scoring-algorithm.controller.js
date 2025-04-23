@@ -1,4 +1,4 @@
-const TestScoringAlgorithm = require('../models/test-scoring-algorithm.model');
+/* const TestScoringAlgorithm = require('../models/test-scoring-algorithm.model');
 const Test = require('../models/test.model');
 const PersonalityTrait = require('../models/personality-traits.model');
 const Question = require('../models/question.model');
@@ -115,4 +115,4 @@ exports.getAlgorithmsByTest = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+}; */

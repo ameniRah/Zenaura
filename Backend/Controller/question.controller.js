@@ -1,4 +1,4 @@
-const question = require('../models/question');
+const question = require('../Models/question.model');
 
 exports.createQuestion = async (req, res) => {
   try {

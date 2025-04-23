@@ -1,4 +1,4 @@
-class BaseController {
+/*class BaseController {
   constructor(model) {
     this.model = model;
   }
@@ -143,4 +143,4 @@ class BaseController {
   };
 }
 
-module.exports = BaseController; 
+module.exports = BaseController; */

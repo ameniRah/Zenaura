@@ -16,6 +16,12 @@ class BaseController {
 
       res.status(201).json(doc);
     } catch (error) {
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          message: 'Validation Error',
+          errors: Object.values(error.errors).map(err => err.message)
+        });
+      }
       next(error);
     }
   };
@@ -66,7 +72,7 @@ class BaseController {
       
       if (!doc) {
         return res.status(404).json({
-          error: 'Document not found'
+          message: 'Document not found'
         });
       }
 
@@ -83,18 +89,21 @@ class BaseController {
 
       if (!doc) {
         return res.status(404).json({
-          error: 'Document not found'
+          message: 'Document not found'
         });
       }
 
-      // Update fields
       Object.assign(doc, req.body);
-
-      // Save document to trigger Mongoose middleware
       await doc.save();
 
       res.status(200).json(doc);
     } catch (error) {
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          message: 'Validation Error',
+          errors: Object.values(error.errors).map(err => err.message)
+        });
+      }
       next(error);
     }
   };
@@ -106,17 +115,17 @@ class BaseController {
 
       if (!doc) {
         return res.status(404).json({
-          error: 'Document not found'
+          message: 'Document not found'
         });
       }
 
-      doc.metadata.status = 'archived';
+      doc.metadata = {
+        ...doc.metadata,
+        status: 'archived'
+      };
       await doc.save();
 
-      res.status(200).json({
-        isArchived: true,
-        ...doc.toObject()
-      });
+      res.status(200).json(doc);
     } catch (error) {
       next(error);
     }
@@ -129,11 +138,14 @@ class BaseController {
 
       if (!doc) {
         return res.status(404).json({
-          error: 'Document not found'
+          message: 'Document not found'
         });
       }
 
-      doc.metadata.status = 'active';
+      doc.metadata = {
+        ...doc.metadata,
+        status: 'active'
+      };
       await doc.save();
 
       res.status(200).json(doc);
@@ -143,4 +155,4 @@ class BaseController {
   };
 }
 
-module.exports = BaseController; 
+module.exports = BaseController;

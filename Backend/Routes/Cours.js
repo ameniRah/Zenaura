@@ -14,6 +14,14 @@ const {
 } = require('../Controller/CoursController');
 const auth = require('../Middll/auth'); 
 
+if (typeof auth !== 'function') {
+    throw new Error("The 'auth' middleware must be a function.");
+}
+
+if (typeof sendSessionReminders !== 'function') {
+    throw new Error("The 'sendSessionReminders' function must be defined in CoursController.");
+}
+
 /**
  * @swagger
  * components:

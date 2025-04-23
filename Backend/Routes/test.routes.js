@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const testController = require('../controllers/test.controller');
-const authMiddleware = require('../middleware/auth.middleware');
-const validationMiddleware = require('../middleware/validation.middleware');
+const testController = require('../Controller/test.controller');
+const authMiddleware = require('../Middll/authMiddleware');
+const validationMiddleware = require('../Middll/validation.middleware');
 const { body, param } = require('express-validator');
 
 // Validation schemas

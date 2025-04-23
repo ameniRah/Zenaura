@@ -1,10 +1,10 @@
-const TestSession = require('../models/test-session.model');
-const User = require('../models/user.model');
-const Test = require('../models/test.model');
-const Question = require('../models/question.model');
-const PersonalityTrait = require('../models/personality-trait.model');
-const TestScoringAlgorithm = require('../models/test-scoring-algorithm.model');
-const PsychologicalProfile = require('../models/psychological-profile.model');
+const TestSession = require('../Models/test-session.model');
+const User = require('../Models/User');
+const Test = require('../Models/test.model');
+const Question = require('../Models/question.model');
+const PersonalityTrait = require('../Models/personality-trait.model');
+const TestScoringAlgorithm = require('../Models/test-scoring-algorithm.model');
+const PsychologicalProfile = require('../Models/psychological-profile.model');
 
 // @desc    Get all test sessions
 exports.getAllTestSessions = async (req, res) => {

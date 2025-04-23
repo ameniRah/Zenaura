@@ -1,7 +1,7 @@
-const TestScoringAlgorithm = require('../models/test-scoring-algorithm.model');
-const Test = require('../models/test.model');
-const PersonalityTrait = require('../models/personality-traits.model');
-const Question = require('../models/question.model');
+const TestScoringAlgorithm = require('../Models/test-scoring-algorithm.model');
+const Test = require('../Models/test.model');
+const PersonalityTrait = require('../Models/personality-traits.model');
+const Question = require('../Models/question.model');
 
 // @desc    Get all scoring algorithms
 exports.getAllTestScoringAlgorithms = async (req, res) => {

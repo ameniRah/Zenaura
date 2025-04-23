@@ -133,28 +133,15 @@ const testSessionSchema = new mongoose.Schema({
     validatedAt: Date
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    { user: 1, test: 1 },
+    { status: 1 },
+    { startTime: 1 }
+  ]
 });
 
-// Indexes
-testSessionSchema.index({ user: 1, test: 1 });
-testSessionSchema.index({ status: 1 });
-testSessionSchema.index({ startTime: 1 });
-
-// Methods
-testSessionSchema.methods.calculateDuration = function() {
-  if (this.endTime && this.startTime) {
-    return Math.round((this.endTime - this.startTime) / 1000); // in seconds
-  }
-  return 0;
-};
-
-testSessionSchema.methods.isExpired = function() {
-  if (!this.flags.hasTimeLimit || !this.startTime) return false;
-  const timeLimit = this.flags.timeLimit * 60 * 1000; // convert to milliseconds
-  return Date.now() - this.startTime > timeLimit;
-};
-
+// Methods with suppressWarning
 testSessionSchema.methods.validateSession = function() {
   // Basic validation rules
   const isValid = 
@@ -166,6 +153,20 @@ testSessionSchema.methods.validateSession = function() {
     isValid,
     reason: !isValid ? 'Session validation failed' : null
   };
+}.bind(testSessionSchema.methods, { suppressWarning: true });
+
+// Other methods without validate in the name don't need suppressWarning
+testSessionSchema.methods.calculateDuration = function() {
+  if (this.endTime && this.startTime) {
+    return Math.round((this.endTime - this.startTime) / 1000); // in seconds
+  }
+  return 0;
+};
+
+testSessionSchema.methods.isExpired = function() {
+  if (!this.flags.hasTimeLimit || !this.startTime) return false;
+  const timeLimit = this.flags.timeLimit * 60 * 1000; // convert to milliseconds
+  return Date.now() - this.startTime > timeLimit;
 };
 
 // Middleware

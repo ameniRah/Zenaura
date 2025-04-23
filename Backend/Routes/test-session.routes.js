@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
-const auth = require('../Middll/auth');
-const validate = require('../Middll/validation.middleware');
+const { verifyToken } = require('../Middll/authMiddleware');
+const { validateRequest } = require('../Middll/validation.middleware');
 const {
     getAllTestSessions,
     getTestSessionById,
@@ -26,38 +26,38 @@ const validateCreateUpdate = [
 ];
 
 // GET /api/sessions
-router.get('/', auth, getAllTestSessions);
+router.get('/', verifyToken, getAllTestSessions);
 
 // GET /api/sessions/:id
-router.get('/:id', auth, validateId, validate, getTestSessionById);
+router.get('/:id', verifyToken, validateId, validateRequest, getTestSessionById);
 
 // POST /api/sessions
-router.post('/', auth, validateCreateUpdate, validate, createTestSession);
+router.post('/', verifyToken, validateCreateUpdate, validateRequest, createTestSession);
 
 // PUT /api/sessions/:id
-router.put('/:id', auth, validateId, validateCreateUpdate, validate, updateTestSession);
+router.put('/:id', verifyToken, validateId, validateCreateUpdate, validateRequest, updateTestSession);
 
 // DELETE /api/sessions/:id
-router.delete('/:id', auth, validateId, validate, deleteTestSession);
+router.delete('/:id', verifyToken, validateId, validateRequest, deleteTestSession);
 
 // GET /api/sessions/user/:userId
-router.get('/user/:userId', auth, param('userId').isMongoId(), validate, getSessionsByUser);
+router.get('/user/:userId', verifyToken, param('userId').isMongoId(), validateRequest, getSessionsByUser);
 
 // GET /api/sessions/status/:status
-router.get('/status/:status', auth, 
+router.get('/status/:status', verifyToken, 
     param('status').isIn(['pending', 'in-progress', 'completed', 'cancelled']), 
-    validate, 
+    validateRequest, 
     getSessionsByStatus
 );
 
 // POST /api/sessions/:id/submit
-router.post('/:id/submit', auth,
+router.post('/:id/submit', verifyToken,
     [
         validateId,
         body('answers').isArray().withMessage('Answers must be an array'),
         body('completedAt').optional().isISO8601().withMessage('Invalid completion date')
     ],
-    validate,
+    validateRequest,
     submitTestSession
 );
 

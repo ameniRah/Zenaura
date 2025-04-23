@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
-const auth = require('../Middll/auth');
-const validate = require('../Middll/validation.middleware');
+const auth = require('../Middll/auth.js');
+const validation = require('../Middll/validation.middleware');
+
 const {
     createCategory,
     getAllCategories,
@@ -10,8 +11,6 @@ const {
     updateCategory,
     deleteCategory
 } = require('../Controller/test-category.controller');
-
-// Base path: /api/categories
 
 // Validation middleware
 const validateId = param('id').isMongoId().withMessage('Invalid ID format');
@@ -22,19 +21,11 @@ const validateCreateUpdate = [
     body('isActive').optional().isBoolean()
 ];
 
-// GET /api/categories
+// Routes with correct middleware
 router.get('/', auth, getAllCategories);
-
-// GET /api/categories/:id
-router.get('/:id', auth, validateId, validate, getCategoryById);
-
-// POST /api/categories
-router.post('/', auth, validateCreateUpdate, validate, createCategory);
-
-// PUT /api/categories/:id
-router.put('/:id', auth, validateId, validateCreateUpdate, validate, updateCategory);
-
-// DELETE /api/categories/:id
-router.delete('/:id', auth, validateId, validate, deleteCategory);
+router.get('/:id', auth, validateId, validation.validateRequest, getCategoryById);
+router.post('/', auth, validateCreateUpdate, validation.validateRequest, createCategory);
+router.put('/:id', auth, validateId, validateCreateUpdate, validation.validateRequest, updateCategory);
+router.delete('/:id', auth, validateId, validation.validateRequest, deleteCategory);
 
 module.exports = router;

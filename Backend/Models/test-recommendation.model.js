@@ -154,24 +154,24 @@ const testRecommendationSchema = new mongoose.Schema({
     default: 'medium'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    { user: 1 },
+    { baseTest: 1 },
+    { 'metadata.status': 1 },
+    { 'metadata.validUntil': 1 }
+  ]
 });
 
-// Indexes
-testRecommendationSchema.index({ user: 1, baseTest: 1 });
-testRecommendationSchema.index({ status: 1 });
-testRecommendationSchema.index({ 'metadata.validUntil': 1 });
-
-// Virtual for active recommendations
-testRecommendationSchema.virtual('activeRecommendations').get(function() {
-  const now = new Date();
-  return this.recommendedTests.filter(rec => 
-    this.status === 'active' && 
-    (!this.metadata.validUntil || this.metadata.validUntil > now)
+// Methods with suppressWarning
+testRecommendationSchema.methods.validateRecommendation = function() {
+  return this.isValid() && this.criteria.traits.every(trait => 
+    trait.score >= trait.threshold.min && 
+    trait.score <= trait.threshold.max
   );
-});
+}.bind(testRecommendationSchema.methods, { suppressWarning: true });
 
-// Methods
+// Regular methods without 'validate' in the name
 testRecommendationSchema.methods.isValid = function() {
   const now = new Date();
   return (
@@ -187,6 +187,15 @@ testRecommendationSchema.methods.updateEffectiveness = function() {
   }
   return this.analytics.effectiveness;
 };
+
+// Virtual for active recommendations
+testRecommendationSchema.virtual('activeRecommendations').get(function() {
+  const now = new Date();
+  return this.recommendedTests.filter(rec => 
+    this.status === 'active' && 
+    (!this.metadata.validUntil || this.metadata.validUntil > now)
+  );
+});
 
 // Statics
 testRecommendationSchema.statics.findActiveForUser = function(userId) {

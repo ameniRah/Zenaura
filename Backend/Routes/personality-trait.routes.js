@@ -3,7 +3,7 @@ const { body, param } = require('express-validator');
 const router = express.Router();
 
 const personalityTraitController = require('../Controller/personality-trait.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+const authMiddleware = require('../Middll/authMiddleware');
 const validationMiddleware = require('../Middll/validation.middleware');
 
 // Validation schemas

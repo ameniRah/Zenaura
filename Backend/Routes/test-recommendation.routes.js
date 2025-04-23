@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
-const auth = require('../Middll/auth');
-const validate = require('../Middll/validation.middleware');
+const { verifyToken } = require('../Middll/authMiddleware');
+const { validateRequest } = require('../Middll/validation.middleware');
 const {
     getAllTestRecommendations,
     getTestRecommendationById,
@@ -25,24 +25,24 @@ const validateCreateUpdate = [
 ];
 
 // GET /api/recommendations
-router.get('/', auth, getAllTestRecommendations);
+router.get('/', verifyToken, getAllTestRecommendations);
 
 // GET /api/recommendations/:id
-router.get('/:id', auth, validateId, validate, getTestRecommendationById);
+router.get('/:id', verifyToken, validateId, validateRequest, getTestRecommendationById);
 
 // POST /api/recommendations
-router.post('/', auth, validateCreateUpdate, validate, createTestRecommendation);
+router.post('/', verifyToken, validateCreateUpdate, validateRequest, createTestRecommendation);
 
 // PUT /api/recommendations/:id
-router.put('/:id', auth, validateId, validateCreateUpdate, validate, updateTestRecommendation);
+router.put('/:id', verifyToken, validateId, validateCreateUpdate, validateRequest, updateTestRecommendation);
 
 // DELETE /api/recommendations/:id
-router.delete('/:id', auth, validateId, validate, deleteTestRecommendation);
+router.delete('/:id', verifyToken, validateId, validateRequest, deleteTestRecommendation);
 
 // GET /api/recommendations/user/:userId
-router.get('/user/:userId', auth, param('userId').isMongoId(), validate, getRecommendationsByUser);
+router.get('/user/:userId', verifyToken, param('userId').isMongoId(), validateRequest, getRecommendationsByUser);
 
 // GET /api/recommendations/status/:status
-router.get('/status/:status', auth, param('status').isIn(['pending', 'completed', 'rejected']), validate, getRecommendationsByStatus);
+router.get('/status/:status', verifyToken, param('status').isIn(['pending', 'completed', 'rejected']), validateRequest, getRecommendationsByStatus);
 
 module.exports = router;

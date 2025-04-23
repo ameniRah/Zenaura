@@ -6,10 +6,11 @@ const config = {
     NODE_ENV: process.env.NODE_ENV || 'development',
 
     // MongoDB configuration
-    MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/test',
+    MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/zenaura',
+    TEST_MONGODB_URI: 'mongodb://localhost:27017/zenaura_test',
     
     // JWT configuration
-    JWT_SECRET: process.env.JWT_SECRET || 'test-secret-key',
+    JWT_SECRET: process.env.JWT_SECRET || 'your-super-secret-jwt-key-zenaura',
     JWT_EXPIRE: process.env.JWT_EXPIRE || '24h',
     
     // API configuration
@@ -29,12 +30,11 @@ const config = {
     // Security
     BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10,
 
-    mongodb: {
-        url: process.env.MONGODB_URL || 'mongodb://localhost:27017/test',
-        options: {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        }
+    // Test configuration
+    test: {
+        MONGODB_URI: 'mongodb://localhost:27017/zenaura_test',
+        PORT: 3001,
+        JWT_SECRET: 'test_jwt_secret'
     }
 };
 

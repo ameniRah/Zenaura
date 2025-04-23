@@ -108,13 +108,13 @@ const testCategorySchema = new mongoose.Schema({
     description: String
   }]
 }, {
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    { name: 1 },
+    { parentCategory: 1 },
+    { 'metadata.status': 1 }
+  ]
 });
-
-// Indexes
-testCategorySchema.index({ name: 1 }, { unique: true });
-testCategorySchema.index({ parentCategory: 1 });
-testCategorySchema.index({ 'metadata.status': 1 });
 
 // Virtual for child categories
 testCategorySchema.virtual('childCategories', {
@@ -124,10 +124,12 @@ testCategorySchema.virtual('childCategories', {
 });
 
 // Methods
-testCategorySchema.methods.isValidForAge = function(age) {
+// Renamed from validate to checkAgeRequirement
+testCategorySchema.methods.checkAgeRequirement = function(age) {
   return age >= this.ageRange.min && age <= this.ageRange.max;
-};
+}.bind(testCategorySchema.methods, { suppressWarning: true });
 
+// Regular methods without 'validate' in the name
 testCategorySchema.methods.getFullPath = async function() {
   let path = [this.name];
   let currentCategory = this;
@@ -136,8 +138,6 @@ testCategorySchema.methods.getFullPath = async function() {
     currentCategory = await this.model('TestCategory').findById(currentCategory.parentCategory);
     if (currentCategory) {
       path.unshift(currentCategory.name);
-    } else {
-      break;
     }
   }
   

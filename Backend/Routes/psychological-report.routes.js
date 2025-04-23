@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 const auth = require('../Middll/auth');
-const validate = require('../Middll/validation.middleware');
+const validation = require('../Middll/validation.middleware');
+
 const {
     createReport,
     getAllReports,
@@ -13,8 +14,6 @@ const {
     getReportsByPsychologist,
     updateReportStatus
 } = require('../Controller/psychological-report.controller');
-
-// Base path: /api/reports
 
 // Validation middleware
 const validateId = param('id').isMongoId().withMessage('Invalid ID format');
@@ -33,43 +32,32 @@ const validateStatus = [
         .withMessage('Invalid status value')
 ];
 
-// GET /api/reports
+// Routes
 router.get('/', auth, getAllReports);
+router.get('/:id', auth, validateId, validation.validateRequest, getReportById);
+router.post('/', auth, validateCreateUpdate, validation.validateRequest, createReport);
+router.put('/:id', auth, validateId, validateCreateUpdate, validation.validateRequest, updateReport);
+router.delete('/:id', auth, validateId, validation.validateRequest, deleteReport);
 
-// GET /api/reports/:id
-router.get('/:id', auth, validateId, validate, getReportById);
-
-// POST /api/reports
-router.post('/', auth, validateCreateUpdate, validate, createReport);
-
-// PUT /api/reports/:id
-router.put('/:id', auth, validateId, validateCreateUpdate, validate, updateReport);
-
-// DELETE /api/reports/:id
-router.delete('/:id', auth, validateId, validate, deleteReport);
-
-// GET /api/reports/user/:userId
 router.get('/user/:userId', 
     auth, 
     param('userId').isMongoId().withMessage('Invalid user ID format'),
-    validate,
+    validation.validateRequest,
     getReportsByUser
 );
 
-// GET /api/reports/psychologist/:psychologistId
 router.get('/psychologist/:psychologistId',
     auth,
     param('psychologistId').isMongoId().withMessage('Invalid psychologist ID format'),
-    validate,
+    validation.validateRequest,
     getReportsByPsychologist
 );
 
-// PATCH /api/reports/:id/status
 router.patch('/:id/status',
     auth,
     validateId,
     validateStatus,
-    validate,
+    validation.validateRequest,
     updateReportStatus
 );
 

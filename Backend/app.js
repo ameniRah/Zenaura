@@ -58,13 +58,13 @@ const coursSessionRoutes = require('./Routes/CoursSession');
 const authRoutes = require('./Routes/auth.routes');
 const personalityTraitRoutes = require('./Routes/personality-trait.routes');
 const testRoutes = require('./Routes/test.routes');
-const TestSessionRoutes = require('./Routes/TestSession.routes');
-const TestScoringAlgorithmRoutes = require('./Routes/TestScoringAlgorithm.routes');
-const TestRecommendationRoutes = require('./Routes/TestRecommendation.routes');
-const TestCategoryRoutes = require('./Routes/TestCategory.routes');
+const TestSessionRoutes = require('./Routes/test-session.routes');
+const TestScoringAlgorithmRoutes = require('./Routes/test-scoring-algorithm.routes');
+const TestRecommendationRoutes = require('./Routes/test-recommendation.routes');
+const TestCategoryRoutes = require('./Routes/test-category.routes');
 const questionRoutes = require('./Routes/question.routes');
-const PsychologicalProfileRoutes = require('./Routes/PsychologicalProfile.routes');
-const PsychologicalReportRoutes = require('./Routes/PsychologicalReport.routes');
+const PsychologicalProfileRoutes = require('./Routes/psychological-profile.routes');
+const PsychologicalReportRoutes = require('./Routes/psychological-report.routes');
 const UserRoutes = require('./Routes/User.routes');
 
 // === Utilisation des routes ===

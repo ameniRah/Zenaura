@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
-const auth = require('../Middll/auth');
-const validate = require('../Middll/validation.middleware');
+const { verifyToken } = require('../Middll/authMiddleware');
+const { validateRequest } = require('../Middll/validation.middleware');
 const {
     getAllTestScoringAlgorithms,
     getTestScoringAlgorithmById,
@@ -26,33 +26,33 @@ const validateCreateUpdate = [
 ];
 
 // GET /api/scoring-algorithms
-router.get('/', auth, getAllTestScoringAlgorithms);
+router.get('/', verifyToken, getAllTestScoringAlgorithms);
 
 // GET /api/scoring-algorithms/:id
-router.get('/:id', auth, validateId, validate, getTestScoringAlgorithmById);
+router.get('/:id', verifyToken, validateId, validateRequest, getTestScoringAlgorithmById);
 
 // POST /api/scoring-algorithms
-router.post('/', auth, validateCreateUpdate, validate, createTestScoringAlgorithm);
+router.post('/', verifyToken, validateCreateUpdate, validateRequest, createTestScoringAlgorithm);
 
 // PUT /api/scoring-algorithms/:id
-router.put('/:id', auth, validateId, validateCreateUpdate, validate, updateTestScoringAlgorithm);
+router.put('/:id', verifyToken, validateId, validateCreateUpdate, validateRequest, updateTestScoringAlgorithm);
 
 // DELETE /api/scoring-algorithms/:id
-router.delete('/:id', auth, validateId, validate, deleteTestScoringAlgorithm);
+router.delete('/:id', verifyToken, validateId, validateRequest, deleteTestScoringAlgorithm);
 
 // GET /api/scoring-algorithms/test/:testId
-router.get('/test/:testId', auth, param('testId').isMongoId(), validate, getAlgorithmsByTest);
+router.get('/test/:testId', verifyToken, param('testId').isMongoId(), validateRequest, getAlgorithmsByTest);
 
 // POST /api/scoring-algorithms/calculate
-router.post('/calculate', auth, [
+router.post('/calculate', verifyToken, [
     body('algorithmId').isMongoId().withMessage('Valid algorithm ID is required'),
     body('answers').isArray().withMessage('Answers must be an array')
-], validate, calculateScore);
+], validateRequest, calculateScore);
 
 // POST /api/scoring-algorithms/validate
-router.post('/validate', auth, [
+router.post('/validate', verifyToken, [
     body('algorithmId').isMongoId().withMessage('Valid algorithm ID is required'),
     body('results').isArray().withMessage('Results must be an array')
-], validate, validateResults);
+], validateRequest, validateResults);
 
 module.exports = router;

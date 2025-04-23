@@ -1,5 +1,5 @@
 const TestRecommendation = require('../Models/test-recommendation.model');
-const User = require('../Models/User');
+const User = require('../Models/User.model');
 const Test = require('../Models/test.model');
 
 //  Get all test recommendations
@@ -141,14 +141,4 @@ exports.getRecommendationsByStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
-
-module.exports = {
-    getAllTestRecommendations,
-    getTestRecommendationById,
-    createTestRecommendation,
-    updateTestRecommendation,
-    deleteTestRecommendation,
-    getRecommendationsByUser,
-    getRecommendationsByStatus
 };

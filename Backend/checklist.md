@@ -91,3 +91,34 @@
   - Removed in-memory array storage
   - Implemented proper MVC structure
   - Added proper type checking and validation
+
+## Recent Error Fixes [April 23, 2025]
+### Route and Controller Issues
+- [x] Fixed duplicate code in test-category.controller.js
+  - Issue: Duplicate declaration of TestCategory and controller functions
+  - Solution: Removed duplicate code and kept single implementation with proper exports
+
+### Validation Middleware Issues
+- [x] Fixed validation middleware usage in psychological-report.routes.js
+  - Issue: Incorrect usage of validate middleware (used as object instead of function)
+  - Solution: Updated to use validation.validateRequest instead of direct validate reference
+  - Applied fix across all routes using validation middleware
+
+### MongoDB Connection
+- [x] Server successfully running on port 3000
+- [x] MongoDB connection established
+
+### Remaining Warnings to Address
+- [ ] Mongoose validate method warning
+  - Issue: Method name "validate" conflicts with mongoose internal method
+  - Action needed: Use suppressWarning option or rename custom validate methods
+
+- [ ] Duplicate schema indexes
+  - Issue: Duplicate index declarations on "anonymousId" and "name" fields
+  - Action needed: Remove duplicate index definitions in affected schemas
+
+# Development Checklist
+
+## Bug Fixes
+- [x] Fixed import path in CoursController.js from '../Middll/Validate' to '../Middll/validation.middleware' (April 23, 2025)
+- [x] Fixed auth middleware import path in personality-trait.routes.js from '../middleware/auth.middleware' to '../Middll/authMiddleware' (April 23, 2025)

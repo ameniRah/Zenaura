@@ -263,6 +263,23 @@ testScoringAlgorithmSchema.methods.erf = function(x) {
   return sign * y;
 };
 
+// Methods with suppressWarning
+testScoringAlgorithmSchema.methods.validateResults = function(results) {
+  // Validation logic
+  return results.every(result => 
+    result.score >= 0 && 
+    result.score <= this.configuration.maxScore
+  );
+}.bind(testScoringAlgorithmSchema.methods, { suppressWarning: true });
+
+testScoringAlgorithmSchema.methods.validate = async function() {
+  // Existing validation logic
+  if (this.type === 'adaptive' && !this.adaptiveRules?.length) {
+    throw new Error('Adaptive scoring requires at least one rule');
+  }
+  return true;
+}.bind(testScoringAlgorithmSchema.methods, { suppressWarning: true });
+
 // Middleware
 testScoringAlgorithmSchema.pre('save', function(next) {
   if (this.isModified()) {

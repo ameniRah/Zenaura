@@ -7,7 +7,7 @@ const CoursSession = require('../Models/CoursSession');
 //User Model
 const User = require('../Models/User');
 //Validation
-const { validateCourseCategory, validateCours, validateCoursSession  } = require('../Middll/Validate');
+const { validateCourseCategory, validateCours, validateCoursSession  } = require('../Middll/validation.middleware');
 //Email Service
 const { sendEmail, emailTemplates, scheduleReminder } = require('../mailer');
 

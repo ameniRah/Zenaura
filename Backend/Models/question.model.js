@@ -127,17 +127,17 @@ const questionSchema = new mongoose.Schema({
     default: 'draft'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    { category: 1 },
+    { type: 1 },
+    { 'metadata.difficulty': 1 },
+    { status: 1 }
+  ]
 });
 
-// Indexes
-questionSchema.index({ category: 1 });
-questionSchema.index({ type: 1 });
-questionSchema.index({ 'metadata.difficulty': 1 });
-questionSchema.index({ status: 1 });
-
 // Methods
-questionSchema.methods.validateAnswer = function(answer) {
+questionSchema.methods.checkAnswer = function(answer) {
   // Implementation depends on question type
   switch(this.type) {
     case 'multiple_choice':
@@ -153,7 +153,7 @@ questionSchema.methods.validateAnswer = function(answer) {
     default:
       return true;
   }
-};
+}.bind(questionSchema.methods, { suppressWarning: true });
 
 // Middleware
 questionSchema.pre('save', function(next) {

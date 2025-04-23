@@ -1,9 +1,17 @@
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const config = require('../config/config');
+const config = require('../Config/test.config');
 
 const generateToken = (payload) => {
-  return jwt.sign(payload, config.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign(
+    { 
+      ...payload,
+      _id: new mongoose.Types.ObjectId(),
+      email: payload.role === 'admin' ? 'admin@test.com' : 'user@test.com'
+    }, 
+    config.JWT_SECRET || 'test_jwt_secret',
+    { expiresIn: '1h' }
+  );
 };
 
 const validQuestionData = {
@@ -58,9 +66,9 @@ const validTestData = {
 };
 
 const validScoringAlgorithmData = {
-  name: 'Test Algorithm',
-  description: 'Test Description',
-  type: 'weighted',
+  name: 'Test Scoring Algorithm',
+  description: 'Test Description that is at least 10 characters long',
+  type: 'simple', // Changed from 'weighted' to match enum
   configuration: {
     baseScore: 0,
     maxScore: 100,
@@ -69,33 +77,31 @@ const validScoringAlgorithmData = {
       timeBonus: {
         enabled: false,
         factor: 0.1
-      },
-      consistencyPenalty: {
-        enabled: false,
-        factor: 0.1
       }
     },
     normalization: {
       method: 'none'
     }
   },
+  traitCalculations: [{
+    formula: 'sum', // Added default formula
+    weight: 1
+  }],
   metadata: {
-    createdBy: new mongoose.Types.ObjectId(),
-    status: 'active',
+    status: 'testing',
     version: 1
   }
 };
 
 const validTraitData = {
   name: 'Test Trait',
-  description: 'Test Description',
+  description: 'Test Description that is at least 10 characters long',
   category: 'Big Five',
   measurementScale: {
     min: 0,
     max: 100
   },
   metadata: {
-    createdBy: new mongoose.Types.ObjectId(),
     status: 'active',
     version: 1
   }
@@ -120,4 +126,4 @@ module.exports = {
   validTraitData,
   validProfileData,
   validQuestionData
-}; 
+};

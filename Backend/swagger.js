@@ -18,6 +18,7 @@ const options = {
   apis: ['./Routes/*.js'], // 📂 Où Swagger va chercher les commentaires JSDoc
 };
 
+
 const swaggerSpec = swaggerJsDoc(options);
 
 module.exports = { swaggerUi, swaggerSpec };

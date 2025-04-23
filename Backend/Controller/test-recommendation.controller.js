@@ -1,6 +1,6 @@
-const TestRecommendation = require('../models/test-recommendation.model');
-const User = require('../models/user.model');
-const Test = require('../models/test.model');
+const TestRecommendation = require('../Models/test-recommendation.model');
+const User = require('../Models/User.model');
+const Test = require('../Models/test.model');
 
 //  Get all test recommendations
 exports.getAllTestRecommendations = async (req, res) => {

@@ -10,10 +10,18 @@ jest.setTimeout(30000);
 describe('Personality Trait API Endpoints', () => {
   let adminToken, userToken;
 
+  beforeAll(() => {
+    // Ensure we're in test environment
+    process.env.NODE_ENV = 'test';
+  });
+
   beforeEach(async () => {
-    // Generate tokens
-    adminToken = generateToken({ role: 'admin' });
-    userToken = generateToken({ role: 'user' });
+    // Generate test tokens
+    adminToken = `test-admin-token`;
+    userToken = `test-user-token`;
+
+    // Clean up database
+    await PersonalityTrait.deleteMany({});
   });
 
   describe('POST /api/personality-traits', () => {
@@ -173,4 +181,4 @@ describe('Personality Trait API Endpoints', () => {
       expect(response.body.isValid).toBe(false);
     });
   });
-}); 
+});

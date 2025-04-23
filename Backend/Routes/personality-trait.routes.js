@@ -2,9 +2,9 @@ const express = require('express');
 const { body, param } = require('express-validator');
 const router = express.Router();
 
-const personalityTraitController = require('../controllers/personality-trait.controller');
-const authMiddleware = require('../middleware/auth.middleware');
-const validationMiddleware = require('../middleware/validation.middleware');
+const personalityTraitController = require('../Controller/personality-trait.controller');
+const authMiddleware = require('../Middll/authMiddleware');
+const validationMiddleware = require('../Middll/validation.middleware');
 
 // Validation schemas
 const createTraitValidation = [
@@ -100,27 +100,6 @@ router
     personalityTraitController.delete
   );
 
-router.get(
-  '/category/:category',
-  authMiddleware.verifyToken,
-  param('category')
-    .isIn(['Big Five', 'MBTI', 'HEXACO', 'Custom'])
-    .withMessage('Invalid category'),
-  validationMiddleware.validateRequest,
-  personalityTraitController.getByCategory
-);
-
-router.post(
-  '/validate-score',
-  authMiddleware.verifyToken,
-  [
-    body('traitId').isMongoId().withMessage('Invalid trait ID'),
-    body('score').isNumeric().withMessage('Score must be a number')
-  ],
-  validationMiddleware.validateRequest,
-  personalityTraitController.validateScore
-);
-
 router
   .route('/:id/relationships')
   .get(
@@ -164,4 +143,25 @@ router.post(
   personalityTraitController.restore
 );
 
-module.exports = router; 
+router.get(
+  '/category/:category',
+  authMiddleware.verifyToken,
+  param('category')
+    .isIn(['Big Five', 'MBTI', 'HEXACO', 'Custom'])
+    .withMessage('Invalid category'),
+  validationMiddleware.validateRequest,
+  personalityTraitController.getByCategory
+);
+
+router.post(
+  '/validate-score',
+  authMiddleware.verifyToken,
+  [
+    body('traitId').isMongoId().withMessage('Invalid trait ID'),
+    body('score').isNumeric().withMessage('Score must be a number')
+  ],
+  validationMiddleware.validateRequest,
+  personalityTraitController.validateScore
+);
+
+module.exports = router;

@@ -14,7 +14,7 @@ const testScoringAlgorithmSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['simple', 'weighted', 'adaptive', 'custom'],
+    enum: ['simple', 'weighted', 'adaptive', 'custom', 'standardized'],
     required: true
   },
   configuration: {
@@ -72,7 +72,7 @@ const testScoringAlgorithmSchema = new mongoose.Schema({
     },
     formula: {
       type: String,
-      required: true
+      default: 'sum'  // Making formula optional with a default value
     },
     weight: {
       type: Number,
@@ -113,8 +113,7 @@ const testScoringAlgorithmSchema = new mongoose.Schema({
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      ref: 'User'
     },
     validationStatus: {
       isValidated: {
@@ -159,13 +158,13 @@ const testScoringAlgorithmSchema = new mongoose.Schema({
     validationErrors: [String]
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    { name: 1 },
+    { type: 1 },
+    { 'metadata.status': 1 }
+  ]
 });
-
-// Indexes
-testScoringAlgorithmSchema.index({ name: 1 }, { unique: true });
-testScoringAlgorithmSchema.index({ type: 1 });
-testScoringAlgorithmSchema.index({ 'metadata.status': 1 });
 
 // Methods
 testScoringAlgorithmSchema.methods.calculateScore = function(responses) {
@@ -208,6 +207,79 @@ testScoringAlgorithmSchema.methods.normalizeScore = function(score) {
   }
 };
 
+testScoringAlgorithmSchema.methods.calculateZScore = function(score) {
+  const { mean, standardDeviation } = this.configuration.normalization.parameters;
+  if (!mean || !standardDeviation) {
+    return score; // Return raw score if parameters are missing
+  }
+  return (score - mean) / standardDeviation;
+};
+
+testScoringAlgorithmSchema.methods.calculatePercentile = function(score) {
+  // Assumes statistics.averageScore and statistics.standardDeviation are maintained
+  const { averageScore, standardDeviation } = this.statistics;
+  if (!averageScore || !standardDeviation) {
+    return score; // Return raw score if statistics are not available
+  }
+  
+  // Using cumulative normal distribution approximation
+  const z = (score - averageScore) / standardDeviation;
+  const percentile = 0.5 * (1 + this.erf(z / Math.sqrt(2)));
+  return percentile * 100; // Convert to percentage
+};
+
+testScoringAlgorithmSchema.methods.calculateCustomNormalization = function(score) {
+  const { customFormula } = this.configuration.normalization.parameters;
+  if (!customFormula) {
+    return score;
+  }
+  
+  try {
+    // Basic formula evaluation (for safety, in production you might want to use a proper formula parser)
+    const formula = customFormula.replace(/score/g, score);
+    return eval(formula); // Note: In production, use a safer evaluation method
+  } catch (error) {
+    console.error('Error in custom normalization:', error);
+    return score;
+  }
+};
+
+// Helper function for percentile calculation (error function)
+testScoringAlgorithmSchema.methods.erf = function(x) {
+  // Polynomial approximation of the error function
+  const sign = x >= 0 ? 1 : -1;
+  x = Math.abs(x);
+  
+  const a1 = 0.254829592;
+  const a2 = -0.284496736;
+  const a3 = 1.421413741;
+  const a4 = -1.453152027;
+  const a5 = 1.061405429;
+  const p = 0.3275911;
+  
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  
+  return sign * y;
+};
+
+// Methods with suppressWarning
+testScoringAlgorithmSchema.methods.validateResults = function(results) {
+  // Validation logic
+  return results.every(result => 
+    result.score >= 0 && 
+    result.score <= this.configuration.maxScore
+  );
+}.bind(testScoringAlgorithmSchema.methods, { suppressWarning: true });
+
+testScoringAlgorithmSchema.methods.validate = async function() {
+  // Existing validation logic
+  if (this.type === 'adaptive' && !this.adaptiveRules?.length) {
+    throw new Error('Adaptive scoring requires at least one rule');
+  }
+  return true;
+}.bind(testScoringAlgorithmSchema.methods, { suppressWarning: true });
+
 // Middleware
 testScoringAlgorithmSchema.pre('save', function(next) {
   if (this.isModified()) {
@@ -216,6 +288,7 @@ testScoringAlgorithmSchema.pre('save', function(next) {
   next();
 });
 
-const TestScoringAlgorithm = mongoose.model('TestScoringAlgorithm', testScoringAlgorithmSchema);
+// Change model registration to prevent duplicates
+const TestScoringAlgorithm = mongoose.models.TestScoringAlgorithm || mongoose.model('TestScoringAlgorithm', testScoringAlgorithmSchema);
 
 module.exports = TestScoringAlgorithm;

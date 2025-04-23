@@ -1,5 +1,5 @@
 const BaseController = require('./base.controller');
-const Test = require('../models/test.model');
+const Test = require('../Models/test.model');
 const mongoose = require('mongoose');
 
 class TestController extends BaseController {

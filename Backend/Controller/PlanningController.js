@@ -288,18 +288,6 @@ async function getAllEvenements(req, res) {
   }
 }
 
-
-// ✅ Récupérer tous les événements
-async function getAllEvenements(req, res) {
-  try {
-      const evenements = await Evenement.find();
-      res.status(200).json(evenements);
-  } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Erreur lors de la récupération des événements" });
-  }
-}
-
 // ✅ Récupérer un événement par ID
 async function getEvenementById(req, res) {
   try {

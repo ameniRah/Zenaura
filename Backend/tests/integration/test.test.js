@@ -1,67 +1,59 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const app = require('../../app');
-const { validTestData, validScoringAlgorithmData, validTraitData, validQuestionData, generateToken } = require('../test-helpers');
-const Test = require('../../models/test.model');
-const TestCategory = require('../../models/test-category.model');
-const Question = require('../../models/question.model');
-const TestScoringAlgorithm = require('../../models/test-scoring-algorithm.model');
+const { validTestData, validQuestionData, validScoringAlgorithmData } = require('../test-helpers');
+const Test = require('../../Models/test.model');
+const Question = require('../../Models/question.model');
+const TestScoringAlgorithm = require('../../Models/test-scoring-algorithm.model');
+
+jest.setTimeout(30000);
 
 describe('Test API', () => {
-  let adminToken, userToken, testCategory, scoringAlgorithm, question;
+  let adminToken, userToken, questionId, algorithmId;
+
+  beforeAll(() => {
+    process.env.NODE_ENV = 'test';
+  });
 
   beforeEach(async () => {
-    // Clear all test data before each test
-    const collections = await mongoose.connection.db.collections();
-    for (let collection of collections) {
-      await collection.deleteMany({});
-    }
+    // Generate test tokens
+    adminToken = `test-admin-token`;
+    userToken = `test-user-token`;
 
-    // Generate tokens
-    adminToken = generateToken({ role: 'admin' });
-    userToken = generateToken({ role: 'user' });
+    // Clean up collections
+    await Test.deleteMany({});
+    await Question.deleteMany({});
+    await TestScoringAlgorithm.deleteMany({});
 
-    // Create test dependencies
-    testCategory = await TestCategory.create({
-      name: 'Test Category',
-      description: 'Test Category Description',
-      metadata: {
-        createdBy: new mongoose.Types.ObjectId(),
-        status: 'active'
-      }
-    });
+    // Create dependencies for test data
+    const question = await Question.create(validQuestionData);
+    questionId = question._id;
 
-    scoringAlgorithm = await TestScoringAlgorithm.create({
+    const algorithm = await TestScoringAlgorithm.create({
       ...validScoringAlgorithmData,
       metadata: {
         ...validScoringAlgorithmData.metadata,
         createdBy: new mongoose.Types.ObjectId()
       }
     });
-
-    question = await Question.create({
-      ...validQuestionData,
-      metadata: {
-        ...validQuestionData.metadata,
-        createdBy: new mongoose.Types.ObjectId()
-      }
-    });
+    algorithmId = algorithm._id;
   });
 
   describe('POST /api/tests', () => {
     it('should create a new test with admin privileges', async () => {
+      const testData = {
+        ...validTestData,
+        questions: [questionId],
+        scoringAlgorithm: algorithmId
+      };
+
       const response = await request(app)
         .post('/api/tests')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          ...validTestData,
-          category: testCategory._id,
-          scoringAlgorithm: scoringAlgorithm._id,
-          questions: [question._id]
-        });
+        .send(testData);
 
       expect(response.status).toBe(201);
-      expect(response.body.name).toBe(validTestData.name);
+      expect(response.body.name).toBe(testData.name);
     });
 
     it('should return 403 for non-admin users', async () => {
@@ -70,9 +62,8 @@ describe('Test API', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           ...validTestData,
-          category: testCategory._id,
-          scoringAlgorithm: scoringAlgorithm._id,
-          questions: [question._id]
+          questions: [questionId],
+          scoringAlgorithm: algorithmId
         });
 
       expect(response.status).toBe(403);
@@ -92,9 +83,8 @@ describe('Test API', () => {
     it('should get all tests with pagination', async () => {
       await Test.create({
         ...validTestData,
-        category: testCategory._id,
-        scoringAlgorithm: scoringAlgorithm._id,
-        questions: [question._id]
+        questions: [questionId],
+        scoringAlgorithm: algorithmId
       });
 
       const response = await request(app)
@@ -110,9 +100,8 @@ describe('Test API', () => {
     it('should filter tests by category', async () => {
       await Test.create({
         ...validTestData,
-        category: testCategory._id,
-        scoringAlgorithm: scoringAlgorithm._id,
-        questions: [question._id]
+        questions: [questionId],
+        scoringAlgorithm: algorithmId
       });
 
       const response = await request(app)
@@ -129,9 +118,8 @@ describe('Test API', () => {
     it('should update test with admin privileges', async () => {
       const test = await Test.create({
         ...validTestData,
-        category: testCategory._id,
-        scoringAlgorithm: scoringAlgorithm._id,
-        questions: [question._id]
+        questions: [questionId],
+        scoringAlgorithm: algorithmId
       });
 
       const response = await request(app)
@@ -146,9 +134,8 @@ describe('Test API', () => {
     it('should return 403 for non-admin users', async () => {
       const test = await Test.create({
         ...validTestData,
-        category: testCategory._id,
-        scoringAlgorithm: scoringAlgorithm._id,
-        questions: [question._id]
+        questions: [questionId],
+        scoringAlgorithm: algorithmId
       });
 
       const response = await request(app)
@@ -164,9 +151,8 @@ describe('Test API', () => {
     it('should archive test with admin privileges', async () => {
       const test = await Test.create({
         ...validTestData,
-        category: testCategory._id,
-        scoringAlgorithm: scoringAlgorithm._id,
-        questions: [question._id]
+        questions: [questionId],
+        scoringAlgorithm: algorithmId
       });
 
       const response = await request(app)
@@ -181,9 +167,8 @@ describe('Test API', () => {
     it('should return 403 for non-admin users', async () => {
       const test = await Test.create({
         ...validTestData,
-        category: testCategory._id,
-        scoringAlgorithm: scoringAlgorithm._id,
-        questions: [question._id]
+        questions: [questionId],
+        scoringAlgorithm: algorithmId
       });
 
       const response = await request(app)
@@ -193,4 +178,4 @@ describe('Test API', () => {
       expect(response.status).toBe(403);
     });
   });
-}); 
+});

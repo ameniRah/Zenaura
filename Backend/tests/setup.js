@@ -15,10 +15,7 @@ beforeAll(async () => {
   
   mongod = await MongoMemoryServer.create();
   const uri = mongod.getUri();
-  await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  });
+  await mongoose.connect(uri);  // Removed deprecated options
 });
 
 // Clean up after all tests
@@ -40,4 +37,6 @@ afterEach(async () => {
       await collections[key].deleteMany();
     }
   }
-}); 
+});
+
+module.exports = { mongoose, mongod };

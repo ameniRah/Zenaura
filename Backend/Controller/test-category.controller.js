@@ -1,6 +1,7 @@
-const TestCategory = require('../models/TestCategory');
+const TestCategory = require('../Models/test-category.model');
 
-exports.createCategory = async (req, res) => {
+// Define functions first
+const createCategory = async (req, res) => {
   try {
     const newCategory = new TestCategory(req.body);
     const savedCategory = await newCategory.save();
@@ -10,7 +11,7 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-exports.getAllCategories = async (req, res) => {
+const getAllCategories = async (req, res) => {
   try {
     const categories = await TestCategory.find().sort({ createdAt: -1 });
     res.json(categories);
@@ -19,7 +20,7 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
-exports.getCategoryById = async (req, res) => {
+const getCategoryById = async (req, res) => {
   try {
     const category = await TestCategory.findById(req.params.id);
     if (!category) {
@@ -31,14 +32,13 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
-exports.updateCategory = async (req, res) => {
+const updateCategory = async (req, res) => {
   try {
     const updatedCategory = await TestCategory.findByIdAndUpdate(
       req.params.id,
       { ...req.body, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-    
     if (!updatedCategory) {
       return res.status(404).json({ message: 'Category not found' });
     }
@@ -48,7 +48,7 @@ exports.updateCategory = async (req, res) => {
   }
 };
 
-exports.deleteCategory = async (req, res) => {
+const deleteCategory = async (req, res) => {
   try {
     const deletedCategory = await TestCategory.findByIdAndDelete(req.params.id);
     if (!deletedCategory) {
@@ -58,4 +58,13 @@ exports.deleteCategory = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+// Export all functions
+module.exports = {
+  createCategory,
+  getAllCategories,
+  getCategoryById,
+  updateCategory,
+  deleteCategory
 };

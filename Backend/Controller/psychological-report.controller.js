@@ -1,4 +1,4 @@
-const PsychologicalReport = require('../models/PsychologicalReport');
+const PsychologicalReport = require('../Models/psychological-report.model');
 
 exports.createReport = async (req, res) => {
   try {

@@ -8,8 +8,7 @@ const testSchema = new mongoose.Schema({
     trim: true,
     minlength: [2, 'Test name must be at least 2 characters long'],
     maxlength: [100, 'Test name cannot exceed 100 characters'],
-    unique: true,
-    index: true
+    unique: true
   },
   description: {
     type: String,
@@ -162,6 +161,9 @@ const testSchema = new mongoose.Schema({
 
 testSchema.plugin(mongoosePaginate);
 
+// Single index definition for name
+testSchema.index({ name: 1 });
+
 // Validate durations
 testSchema.pre('validate', function(next) {
   if (this.duration.maximum <= this.duration.estimated) {
@@ -234,4 +236,4 @@ testSchema.statics.findActiveByCategory = function(categoryId) {
 
 const Test = mongoose.model('Test', testSchema);
 
-module.exports = Test; 
+module.exports = Test;
